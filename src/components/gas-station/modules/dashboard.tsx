@@ -42,6 +42,7 @@ import { DailyTargetCard } from "../daily-target-card";
 import { PriceHistoryChart } from "../price-history-chart";
 import { ProfitMarginCard } from "../profit-margin-card";
 import { SalesVsExpensesChart } from "../sales-vs-expenses-chart";
+import { DashboardTankOverview } from "../dashboard-tank-overview";
 import { useLanguage } from "../hooks";
 import { formatCurrency, formatLiters, formatTime, isToday } from "@/lib/format";
 import type { DashboardData, ViewKey } from "@/lib/types";
@@ -311,60 +312,8 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
         </Card>
       </div>
 
-      {/* Tank Levels */}
-      <Card className="border-border/60">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Cylinder className="h-4 w-4 text-primary" />
-              {t("tankLevels")}
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => onNavigate?.("tanks")} className="text-xs">
-              {t("viewAll")}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data.tanks.map((tank) => {
-              const pct = Math.min(100, (tank.currentLevel / tank.capacity) * 100);
-              const isLow = tank.currentLevel <= tank.minLevel;
-              return (
-                <div
-                  key={tank.id}
-                  className={`rounded-xl border p-4 ${isLow ? "border-rose-300 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30" : "border-border bg-card"}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{tank.name}</p>
-                      <p className="text-xs text-muted-foreground">{fuelTypeName(tank.fuelType)}</p>
-                    </div>
-                    {isLow && (
-                      <Badge variant="destructive" className="pulse-warning shrink-0">
-                        <AlertTriangle className="me-1 h-3 w-3" />
-                        {t("lowStockAlerts")}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-3 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="num">{formatLiters(tank.currentLevel)}</span>
-                      <span className="num text-muted-foreground">/ {formatLiters(tank.capacity)}</span>
-                    </div>
-                    <Progress
-                      value={pct}
-                      className="h-2"
-                      style={{
-                        background: isLow ? "oklch(0.92 0.04 25)" : undefined,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tank Levels with Mini Gauges */}
+      <DashboardTankOverview />
 
       {/* Sales vs Expenses + Expense Trend */}
       <div className="grid gap-4 lg:grid-cols-2">

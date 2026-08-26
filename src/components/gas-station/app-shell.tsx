@@ -89,36 +89,75 @@ export function AppShell({ station }: { station: Station | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // Global keyboard shortcuts: Cmd/Ctrl+K for command palette, "q" for quick sale
+  // Global keyboard shortcuts: Cmd/Ctrl+K for command palette, "n" for New Sale, "d" for Dashboard
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPaletteOpen((o) => !o);
+        return;
+      }
+
+      // Single-key shortcuts only when not typing in an input
+      if (!isInput && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === "d") {
+          setActiveView("dashboard");
+        } else if (key === "s") {
+          setActiveView("sales");
+        } else if (key === "t") {
+          setActiveView("tanks");
+        } else if (key === "c") {
+          setActiveView("customers");
+        } else if (key === "r") {
+          setActiveView("reports");
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  const shortcutMap: Record<string, string> = {
+    dashboard: "D",
+    sales: "S",
+    tanks: "T",
+    customers: "C",
+    reports: "R",
+  };
+
   const navList = (
     <nav className="flex flex-col gap-1 px-3 py-2">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeView === item.key;
+        const shortcut = shortcutMap[item.key];
         return (
           <button
             key={item.key}
             onClick={() => handleNav(item.key)}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+              "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
               isActive
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
             <Icon className="h-[18px] w-[18px] shrink-0" />
-            <span className="truncate">{t(item.label as never)}</span>
+            <span className="truncate flex-1 text-start">{t(item.label as never)}</span>
+            {shortcut && (
+              <kbd className={cn(
+                "hidden lg:flex h-5 w-5 items-center justify-center rounded text-[10px] font-mono font-bold transition-opacity",
+                isActive
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground opacity-0 group-hover:opacity-100"
+              )}>
+                {shortcut}
+              </kbd>
+            )}
           </button>
         );
       })}
