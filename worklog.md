@@ -434,3 +434,102 @@ Task: Sale Edit, Shift Summary, Dashboard Insights (Top Customers/Fuel, Weekly C
 4. **LOW**: Add authentication/login for multi-user scenarios
 5. **LOW**: Add receipt customization (logo, footer text) in settings
 6. **LOW**: Add bulk sale export by date range
+
+---
+Task ID: QA-ROUND-4
+Agent: qa-improvement-agent-3
+Task: Notifications/Alerts, Daily Target, Fuel Price History with Trend Chart
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 13 modules + Quick Sale FAB + Receipt Printing + Command Palette + Sale Edit + Shift Summary + Dashboard Insights (Top Customers/Fuel, Weekly Comparison, Quick Stats)
+- Lint passes cleanly, all features verified working
+- QA testing with VLM identified key missing features: intelligent alerts/notifications, daily sales target, fuel price history tracking, profit margin visibility
+
+## Current Goals / Completed Modifications / Verification Results
+
+### 1. Notifications/Alerts Dropdown (HIGH priority)
+- **API**: Created GET `/api/gas-station/alerts` endpoint that aggregates all alerts:
+  - Low stock tanks (warning/critical based on threshold)
+  - Low stock products (critical if stock=0, warning otherwise)
+  - High credit customers (balance > 10,000 AFN)
+  - Long-running shifts (>10 hours)
+  - Returns alerts with localized title/message (en/da/ps), type (critical/warning/info), category (tank/product/credit/shift), and navigation action
+- **Component**: Created `NotificationsDropdown` — a bell icon button in header with:
+  - Count badge (red pulse for critical, amber for warnings)
+  - Dropdown panel with header, summary badges (critical/warning counts), scrollable alert list
+  - Category-colored icons (tank=blue, product=violet, credit=amber, shift=emerald)
+  - Click-to-navigate (clicking an alert goes to the relevant module)
+  - "All Clear" empty state with checkmark when no alerts
+  - Auto-refresh every 30 seconds
+  - Outside-click to close, animate-scale-in animation
+- **Verified**: Tested dropdown shows 4 warnings (2 low stock products, 2 high credit customers)
+
+### 2. Daily Sales Target (HIGH priority)
+- **Database**: Added `dailyTarget` Float field to Station model (default 50000)
+- **API**: Created GET `/api/gas-station/daily-target` endpoint returning:
+  - target, todayTotal, todayLiters, progress %, remaining, isAchieved
+  - yesterdayTotal (for comparison), projectedTotal (pace-based projection), saleCount
+- **Component**: Created `DailyTargetCard` — a progress card showing:
+  - Today's sales vs target with large progress bar (color-coded: emerald if achieved, amber if behind pace)
+  - "Target Achieved!" badge when reached
+  - Remaining amount with on-track/off-track color coding
+  - 3 mini-stats: Projected Today, Yesterday, Sale Count
+  - Vs yesterday trend indicator (% change)
+  - Inline edit mode (pencil button → input + save) to change target
+  - Auto-refresh every 60 seconds
+- **Integration**: Placed in dashboard as a 2-column grid alongside the welcome banner (lg:col-span-2 + DailyTargetCard)
+- **Settings**: Added dailyTarget field to Settings module form
+
+### 3. Fuel Price History with Trend Chart (HIGH priority)
+- **Database**: Added `PriceHistory` model (id, fuelTypeId, price, cost, date, note) with relation to FuelType
+- **API**: Created GET/POST `/api/gas-station/price-history`:
+  - GET: Returns price history for all fuel types, grouped by fuel type, with current price/cost and history array (supports ?days= and ?fuelTypeId= params)
+  - POST: Records a price change AND updates the fuel type's current price/cost (atomic operation)
+- **Seed**: Created `/api/gas-station/seed-prices` endpoint that generates 15 days of realistic price history with slight variations. Ran it → 48 entries created (16 days × 3 fuel types)
+- **Component**: Created `PriceHistoryChart` — a comprehensive price management card with:
+  - Line chart showing price trends for all fuel types (color-coded lines)
+  - Period selector (7d/15d/30d)
+  - Tooltip showing formatted currency values with fuel type names
+  - 3 fuel price cards below: current price (large), cost price, profit margin % badge, edit button
+  - Edit Price dialog: fuel type selector, selling price input, cost price input, live profit margin calculation
+  - On save: updates fuel type price + creates price history entry + invalidates dashboard/queries
+- **Integration**: Added at bottom of dashboard after Top Customers/Fuel Types section
+
+### 4. Translation Keys Added (~30 new keys)
+- Notifications: alerts, critical, warning, allClear, noAlerts, alertsRefreshAuto, lowStock, highCredit
+- Daily target: dailyTarget, todayProgress, targetAchieved, onTrack, projectedToday, remaining, yesterday, setTarget
+- Price history: priceHistory, priceTrend, updatePrice, currentPrice, priceChanged, costPrice, sellingPrice, profitMargin, margin, perLiter
+- Added to all 3 languages (en/da/ps)
+
+### 5. Schema & Type Updates
+- Added `dailyTarget` field to Station model + Station type
+- Added `PriceHistory` model to Prisma schema
+- Ran `bun run db:push` to sync schema
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Dev server compiles without errors
+- ✅ Alerts API: returns 4 alerts (2 low stock products, 2 high credit customers)
+- ✅ Daily Target API: target=50000, today=16775, progress=33.6%, projected=44899
+- ✅ Price History API: 3 fuel types with 15 days of history each
+- ✅ Notifications dropdown: VLM-verified showing alerts with icons, count badge (4), professional design
+- ✅ Daily Target card: VLM-verified showing progress bar (33.6%), projected total, edit capability
+- ✅ Price Trend chart: VLM-verified showing 15-day line chart, fuel price cards with margins, period selector, edit buttons
+- ✅ All features work in Dari (RTL) with proper translations
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **Dev server stability**: The sandbox environment kills the background dev server process periodically. Used `setsid` + auto-restart script to mitigate. Production deployment would not have this issue.
+- **Print Shift Report**: Still uses window.print() with receipt-only print CSS — shift summary print needs proper print styles
+- **Supplier management**: Refills reference suppliers as text; could add proper Supplier model
+- **Authentication**: Still no login system
+- **Receipt customization**: Could add logo upload and custom footer text in settings
+- **Bulk sale actions**: Could add date-range bulk delete/export
+- **Anomaly detection**: Could add alerts for unusual patterns (spikes in waste/loss, pump efficiency drops)
+
+## Priority Recommendations for Next Phase
+1. **MEDIUM**: Add proper print styles for shift summary (currently only receipt prints)
+2. **MEDIUM**: Add supplier management module with CRUD
+3. **MEDIUM**: Add anomaly detection alerts (unusual sales patterns)
+4. **LOW**: Add authentication/login for multi-user scenarios
+5. **LOW**: Add receipt customization (logo, footer text) in settings
+6. **LOW**: Add bulk sale export by date range

@@ -52,6 +52,7 @@ import { ReportsModule } from "./modules/reports";
 import { SettingsModule } from "./modules/settings";
 import { QuickSaleFab } from "./quick-sale-fab";
 import { CommandPalette } from "./command-palette";
+import { NotificationsDropdown } from "./notifications-dropdown";
 import { useEffect } from "react";
 
 const navItems: { key: ViewKey; icon: typeof LayoutDashboard; label: string }[] = [
@@ -254,6 +255,9 @@ export function AppShell({ station }: { station: Station | null }) {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Notifications */}
+            <NotificationsDropdown onNavigate={handleNav} />
 
             {/* Theme Toggle */}
             <Button

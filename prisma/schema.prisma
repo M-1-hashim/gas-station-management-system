@@ -12,17 +12,18 @@ datasource db {
 
 // Station info (singleton record)
 model Station {
-  id        String   @id @default("default")
-  name      String   @default("تانک تیل")
-  namePs    String?
-  nameDa    String?
-  owner     String?
-  phone     String?
-  address   String?
-  currency  String   @default("AFN")
+  id           String   @id @default("default")
+  name         String   @default("تانک تیل")
+  namePs       String?
+  nameDa       String?
+  owner        String?
+  phone        String?
+  address      String?
+  currency     String   @default("AFN")
   currencySymbol String @default("؋")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dailyTarget  Float    @default(50000)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // Fuel types: Petrol (بنزین), Diesel (ډیزل), Kerosene (نفط), etc.
@@ -37,10 +38,23 @@ model FuelType {
   color     String   @default("#10b981")
   icon      String?
   active    Boolean  @default(true)
+  priceHistory PriceHistory[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tanks     Tank[]
   sales     Sale[]
+}
+
+// Track fuel price changes over time
+model PriceHistory {
+  id          String   @id @default(cuid())
+  fuelTypeId  String
+  fuelType    FuelType @relation(fields: [fuelTypeId], references: [id])
+  price       Float    // selling price per liter
+  cost        Float    // purchase cost per liter
+  date        DateTime @default(now())
+  note        String?
+  createdAt   DateTime @default(now())
 }
 
 model Tank {

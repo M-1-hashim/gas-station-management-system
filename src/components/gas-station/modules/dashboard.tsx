@@ -38,6 +38,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "../stat-card";
+import { DailyTargetCard } from "../daily-target-card";
+import { PriceHistoryChart } from "../price-history-chart";
 import { useLanguage } from "../hooks";
 import { formatCurrency, formatLiters, formatTime, isToday } from "@/lib/format";
 import type { DashboardData, ViewKey } from "@/lib/types";
@@ -79,28 +81,31 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
-      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-accent/10 to-transparent">
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold sm:text-2xl">{t("welcome")} 👋</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("manageYourStation")}</p>
+      {/* Welcome Banner + Daily Target */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-accent/10 to-transparent lg:col-span-2">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold sm:text-2xl">{t("welcome")} 👋</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t("manageYourStation")}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => onNavigate?.("sales")} className="gap-2">
+                  <Plus className="h-4 w-4" /> {t("newSale")}
+                </Button>
+                <Button variant="outline" onClick={() => onNavigate?.("expenses")} className="gap-2">
+                  <Wallet className="h-4 w-4" /> {t("addExpense")}
+                </Button>
+                <Button variant="outline" onClick={() => onNavigate?.("refills")} className="gap-2">
+                  <Truck className="h-4 w-4" /> {t("newRefill")}
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => onNavigate?.("sales")} className="gap-2">
-                <Plus className="h-4 w-4" /> {t("newSale")}
-              </Button>
-              <Button variant="outline" onClick={() => onNavigate?.("expenses")} className="gap-2">
-                <Wallet className="h-4 w-4" /> {t("addExpense")}
-              </Button>
-              <Button variant="outline" onClick={() => onNavigate?.("refills")} className="gap-2">
-                <Truck className="h-4 w-4" /> {t("newRefill")}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <DailyTargetCard />
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -540,6 +545,9 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
           </CardContent>
         </Card>
       </div>
+
+      {/* Price History Chart */}
+      <PriceHistoryChart />
     </div>
   );
 }

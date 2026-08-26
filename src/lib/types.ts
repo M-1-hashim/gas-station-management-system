@@ -10,6 +10,7 @@ export interface Station {
   address: string | null;
   currency: string;
   currencySymbol: string;
+  dailyTarget: number;
 }
 
 export interface FuelType {

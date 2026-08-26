@@ -36,6 +36,7 @@ export async function PUT(req: NextRequest) {
         address: body.address || null,
         currency: body.currency,
         currencySymbol: body.currencySymbol,
+        dailyTarget: body.dailyTarget != null ? parseFloat(body.dailyTarget) : undefined,
       },
       create: {
         id: "default",
@@ -47,6 +48,7 @@ export async function PUT(req: NextRequest) {
         address: body.address || null,
         currency: body.currency,
         currencySymbol: body.currencySymbol,
+        dailyTarget: body.dailyTarget != null ? parseFloat(body.dailyTarget) : 50000,
       },
     });
     return NextResponse.json(station);

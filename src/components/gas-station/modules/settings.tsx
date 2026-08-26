@@ -30,7 +30,7 @@ export function SettingsModule() {
 
   const [form, setForm] = useState<Record<string, string>>({
     name: "", nameDa: "", namePs: "", owner: "", phone: "", address: "",
-    currency: "AFN", currencySymbol: "؋",
+    currency: "AFN", currencySymbol: "؋", dailyTarget: "50000",
   });
   const [loadedId, setLoadedId] = useState<string | null>(null);
 
@@ -45,6 +45,7 @@ export function SettingsModule() {
       address: station.address || "",
       currency: station.currency || "AFN",
       currencySymbol: station.currencySymbol || "؋",
+      dailyTarget: String(station.dailyTarget || 50000),
     });
   }
 
@@ -144,6 +145,10 @@ export function SettingsModule() {
               <div className="space-y-1.5">
                 <Label>{t("currencySymbol")}</Label>
                 <Input value={form.currencySymbol} onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })} placeholder="؋" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("dailyTarget")} ({station?.currencySymbol || "؋"})</Label>
+                <Input type="number" value={form.dailyTarget || ""} onChange={(e) => setForm({ ...form, dailyTarget: e.target.value })} placeholder="50000" dir="ltr" />
               </div>
             </div>
             <div className="flex justify-end">
