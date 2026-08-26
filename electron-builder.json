@@ -1,0 +1,74 @@
+{
+  "appId": "com.gasstation.manager",
+  "productName": "Gas Station Manager",
+  "copyright": "Copyright © 2026",
+  "directories": {
+    "output": "dist-electron",
+    "buildResources": "electron"
+  },
+  "files": [
+    "electron/**/*",
+    ".next/standalone/**/*",
+    ".next/static/**/*",
+    "public/**/*",
+    "prisma/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": ".next/standalone",
+      "to": "app/.next/standalone"
+    },
+    {
+      "from": ".next/static",
+      "to": "app/.next/static"
+    },
+    {
+      "from": "public",
+      "to": "app/public"
+    },
+    {
+      "from": "prisma",
+      "to": "app/prisma"
+    },
+    {
+      "from": "db",
+      "to": "app/db"
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "electron/assets/icon.png",
+    "artifactName": "GasStationManager-Setup-${version}.exe"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Gas Station Manager",
+    "installerIcon": "electron/assets/icon.png",
+    "uninstallerIcon": "electron/assets/icon.png",
+    "installerHeaderIcon": "electron/assets/icon.png",
+    "deleteAppDataOnUninstall": false,
+    "runAfterFinish": true,
+    "installerLanguages": ["en_US"],
+    "language": "1033"
+  },
+  "mac": {
+    "target": ["dmg"],
+    "icon": "electron/assets/icon.png",
+    "category": "public.app-category.business"
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "icon": "electron/assets/icon.png",
+    "category": "Office"
+  }
+}
