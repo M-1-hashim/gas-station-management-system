@@ -18,6 +18,14 @@ export async function DELETE(
       data: { currentLevel: { decrement: refill.liters } },
     });
 
+    // Reverse supplier balance if linked
+    if (refill.supplierId) {
+      await db.supplier.update({
+        where: { id: refill.supplierId },
+        data: { balance: { decrement: refill.totalCost } },
+      });
+    }
+
     await db.refill.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {

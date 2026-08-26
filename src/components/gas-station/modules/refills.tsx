@@ -36,19 +36,20 @@ import { toast } from "sonner";
 import { useLanguage } from "../hooks";
 import { useList, useCreate, useDelete } from "../api-hooks";
 import { formatCurrency, formatLiters, formatDateTime } from "@/lib/format";
-import type { Refill, Tank, FuelType } from "@/lib/types";
+import type { Refill, Tank, FuelType, Supplier } from "@/lib/types";
 
 export function RefillsModule() {
   const { t, language } = useLanguage();
   const { data: refills, isLoading } = useList<Refill>("refills");
   const { data: tanks } = useList<Tank>("tanks");
+  const { data: suppliers } = useList<Supplier>("suppliers");
   const createMut = useCreate("refills");
   const deleteMut = useDelete("refills");
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
-    tankId: "", liters: "", costPerLiter: "", supplier: "", invoiceNo: "", date: "", note: "",
+    tankId: "", liters: "", costPerLiter: "", supplierId: "", invoiceNo: "", date: "", note: "",
   });
 
   const fuelName = (ft: FuelType) => {
@@ -61,7 +62,7 @@ export function RefillsModule() {
 
   const openCreate = () => {
     const today = new Date().toISOString().split("T")[0];
-    setForm({ tankId: tanks?.[0]?.id || "", liters: "", costPerLiter: "", supplier: "", invoiceNo: "", date: today, note: "" });
+    setForm({ tankId: tanks?.[0]?.id || "", liters: "", costPerLiter: "", supplierId: "", invoiceNo: "", date: today, note: "" });
     setOpen(true);
   };
 
@@ -69,7 +70,7 @@ export function RefillsModule() {
     if (!search) return refills || [];
     const q = search.toLowerCase();
     return (refills || []).filter(
-      (r) => r.supplier?.toLowerCase().includes(q) || r.tank?.name.toLowerCase().includes(q) || r.invoiceNo?.toLowerCase().includes(q)
+      (r) => r.supplier?.name?.toLowerCase().includes(q) || r.tank?.name.toLowerCase().includes(q) || r.invoiceNo?.toLowerCase().includes(q)
     );
   }, [refills, search]);
 
@@ -196,7 +197,7 @@ export function RefillsModule() {
                     <TableCell className="text-end num font-medium text-emerald-600 dark:text-emerald-400">+{formatLiters(refill.liters)}</TableCell>
                     <TableCell className="text-end num text-muted-foreground">{formatCurrency(refill.costPerLiter)}</TableCell>
                     <TableCell className="text-end num font-bold">{formatCurrency(refill.totalCost)}</TableCell>
-                    <TableCell className="text-sm">{refill.supplier || <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm">{refill.supplier?.name || <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="text-sm num">{refill.invoiceNo || <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="text-end">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-600" onClick={() => handleDelete(refill)}>
@@ -248,8 +249,15 @@ export function RefillsModule() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>{t("supplier")}</Label>
-                <Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} />
+                <Label>{t("suppliers")}</Label>
+                <Select value={form.supplierId} onValueChange={(v) => setForm({ ...form, supplierId: v })}>
+                  <SelectTrigger><SelectValue placeholder={t("suppliers")} /></SelectTrigger>
+                  <SelectContent>
+                    {suppliers?.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>{t("invoiceNo")}</Label>

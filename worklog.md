@@ -533,3 +533,140 @@ Task: Notifications/Alerts, Daily Target, Fuel Price History with Trend Chart
 4. **LOW**: Add authentication/login for multi-user scenarios
 5. **LOW**: Add receipt customization (logo, footer text) in settings
 6. **LOW**: Add bulk sale export by date range
+
+---
+Task ID: 5-a
+Agent: suppliers-module-builder
+Task: Build the suppliers management module
+
+Work Log:
+- Read /home/z/my-project/worklog.md (existing multi-task log; appended this entry).
+- Studied reference files: fuel-types.tsx (card-grid CRUD + Dialog + Switch + multi-lang name pattern), customers.tsx (table + summary cards + record-payment dialog via useCustomAction + search + Skeleton + ScrollArea pattern), api-hooks.ts (useList/useCreate/useUpdate/useDelete/useCustomAction signatures — useCustomAction POSTs to `/${key}/${id}` invalidating `[key]` + extra keys + `dashboard`), hooks.tsx (useLanguage returns { t, language, dir }), types.ts (Supplier shape with nameDa/namePs/contactPerson/balance/active/_count.refills).
+- Verified translations.ts has all required keys (suppliers, addSupplier, editSupplier, supplierName, contactPerson, paySupplier, payAmount, totalPayable, refillsCount, name, phone, address, balance, active, inactive, save, cancel, delete, confirmDelete, noData, search, all, savedSuccessfully, deletedSuccessfully, cash) in en/fa/da/ps.
+- Verified API endpoints exist: GET/POST /api/gas-station/suppliers, PATCH/DELETE/POST(record-payment) /api/gas-station/suppliers/[id]. POST payment endpoint uses Prisma `balance: { decrement: amount }` accepting { amount }.
+- Created /home/z/my-project/src/components/gas-station/modules/suppliers.tsx exporting SuppliersModule.
+  * "use client" directive at top.
+  * Imports: lucide-react (Plus, Pencil, Trash2, Wallet, Truck, Search, Phone, MapPin, User); shadcn/ui (Card, Button, Input, Label, Badge, Table, Dialog, Switch, Skeleton, ScrollArea); sonner toast; useLanguage; useList/useCreate/useUpdate/useDelete/useCustomAction; formatCurrency; Supplier type.
+  * Hooks: useList<Supplier>("suppliers"), create/update/delete muts, paymentMut = useCustomAction("suppliers", ["refills"]).
+  * Localized supplierName() helper honoring language === da/ps with fallback to s.name.
+  * useMemo search filter across name/nameDa/namePs/phone.
+  * Summary cards (3): Total suppliers (Truck icon, emerald), Total Payable (Wallet icon, amber, sum of balances>0), Active suppliers count (User icon, emerald). All cards use card-hover utility.
+  * Controls row: search Input with leading Search icon + "Add Supplier" DialogTrigger button.
+  * Form Dialog (max-w-md): supplierName EN (required, marked with *), nameDa (دری, dir rtl), namePs (پښتو, dir rtl), contactPerson, phone (dir ltr), address, balance (number, only when creating — PATCH endpoint does not accept balance), active Switch in bordered row. Cancel + Save buttons with pending state.
+  * Table with table-zebra class inside ScrollArea max-h-[600px]; sticky TableHeader (bg-card z-10); 7 columns: Name (avatar circle + localized name + active/inactive Badge), Contact Person (User icon), Phone (Phone icon, dir ltr), Address (MapPin icon, truncated), Balance (amber Badge when >0, muted when 0), Refills Count, Actions.
+  * Actions per row: Pay Supplier (Wallet, amber, shown only when balance>0), Edit (Pencil), Delete (Trash2, rose-600). Delete uses confirm(t("confirmDelete")).
+  * Pay Supplier Dialog (max-w-md, separate): shows current balance in amber-tinted panel, payAmount number Input (autoFocus), submits via paymentMut.mutate({ id, amount }) reducing balance. Validation: amount>0 and not exceeding balance.
+  * Loading state: 5 Skeleton rows × 7 cols. Empty state: Truck icon + t("noData") centered, colSpan=7.
+  * All user-facing text uses t(); currency via formatCurrency; num class on numeric cells.
+- Ran project-wide `npx tsc --noEmit` — no errors related to suppliers.tsx (the isolated tsc invocation errors were config artifacts, not real).
+
+Stage Summary:
+- SuppliersModule is complete at /home/z/my-project/src/components/gas-station/modules/suppliers.tsx (≈530 lines). Mirrors customers.tsx visual style and code patterns: summary cards → search+add controls → zebra-striped table inside ScrollArea with sticky header → payment Dialog. Adapted to supplier schema (nameDa/namePs/contactPerson/active + Truck icon + amber balance theming for "payable" semantics). Payment uses useCustomAction("suppliers", ["refills"]) posting { amount } to POST /api/gas-station/suppliers/[id].
+- NOT YET wired into app-shell.tsx (SuppliersModule is not imported there). Recommended next action: add `import { SuppliersModule } from "./modules/suppliers"` and a `case "suppliers":` in app-shell.tsx's view switch; ensure nav sidebar has a suppliers entry (ViewKey already includes "suppliers").
+- All 13 task requirements satisfied: table layout with specified columns, 3 summary cards, search filter, Add/Edit dialog with all fields incl. trilingual names, Pay Supplier dialog reducing balance via useCustomAction, amber/orange balance coloring for >0 with muted 0, confirm() delete, useLanguage t() everywhere, sonner toasts, emerald primary + table-zebra + card-hover + spacing, ScrollArea max-h-[600px] with sticky header, Skeleton loading + Truck empty state.
+
+---
+Task ID: QA-ROUND-5
+Agent: qa-improvement-agent-4
+Task: Supplier Management, Customer Detail View, Profit Margin Analytics
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 13+ modules and many advanced features (Quick Sale FAB, Receipt Printing, Command Palette, Sale Edit, Shift Summary, Notifications/Alerts, Daily Target, Price History)
+- Lint passes cleanly, all APIs verified working
+- VLM QA identified top 3 missing features: Supplier Management, Profit Margin Analytics, Customer Detail View
+
+## Current Goals / Completed Modifications / Verification Results
+
+### 1. Supplier Management Module (HIGH priority)
+- **Database**: Added `Supplier` model to Prisma schema (id, name, nameDa, namePs, phone, address, contactPerson, balance, active) with relation to Refill. Updated Refill model: replaced `supplier String?` with `supplierId String?` + `supplier Supplier?` relation
+- **API**: Created:
+  - GET/POST `/api/gas-station/suppliers` (list + create)
+  - PATCH/DELETE/POST `/api/gas-station/suppliers/[id]` (update + delete + record payment that reduces balance)
+- **Component**: Built `SuppliersModule` (delegated to subagent Task 5-a) with:
+  - Table layout: Name, Contact Person, Phone, Address, Balance (payable), Refills Count, Actions
+  - 3 summary cards: Total Suppliers, Total Payable, Active count
+  - Search box + Add Supplier dialog (name EN/دری/پښتو, contactPerson, phone, address, balance, active Switch)
+  - Pay Supplier dialog (reduces balance via useCustomAction)
+  - Edit/Delete with confirm()
+  - table-zebra, card-hover, ScrollArea, loading skeleton, Truck icon empty state
+- **Integration**: 
+  - Added "suppliers" to nav items (Building2 icon) in app-shell
+  - Added to Command Palette nav items with keywords
+  - Added "suppliers" to ViewKey type
+  - Updated Refills module: replaced text `supplier` input with Supplier dropdown (Select), displays supplier.name in table, filter by supplier name
+- **Refill API**: Updated GET/POST to include supplier relation; POST increases supplier balance (payable) on refill; DELETE reverses supplier balance
+- **Seeded**: 2 suppliers (Kabul Fuel Supply Co. with ؋45,000 balance, Ariana Petroleum with ؋0)
+- **Verified**: API returns 2 suppliers; module UI structure correct (summary cards, table, search, add button)
+
+### 2. Customer Detail View (HIGH priority)
+- **API**: Created GET `/api/gas-station/customer-detail/[id]` returning:
+  - Customer info + summary (totalSales, totalLiters, totalPaid, currentBalance, creditTotal, cashTotal, saleCount, paymentCount, avgSaleValue, lastSaleDate, recentSaleCount, recentSaleTotal)
+  - salesByFuelType (with count per fuel)
+  - monthlyActivity (last 6 months with amount + count)
+  - Last 50 sales with fuelType + pump
+  - All payments
+- **Component**: Built `CustomerDetailDialog` with:
+  - Gradient header with customer name
+  - Balance banner (amber if >0, emerald if 0) showing outstanding نسیه
+  - Customer info (avatar, phone, address)
+  - 4 KPI cards: Total Sales, Total Liters, Total Paid, Avg Sale Value
+  - Payment Methods breakdown (cash vs credit with colored cards)
+  - Monthly Activity bar chart (6 months)
+  - Sales by Fuel Type table
+  - Sales History table (last 50, scrollable)
+  - Payment History table (scrollable)
+- **Integration**: 
+  - Added "View Details" (Eye icon) button per customer row in customers module
+  - Added CustomerDetailDialog to customers module
+  - Pass station to CustomersModule for currency context
+- **Verified**: API returns customer "شرکت حمل و نقل آرمان" with totalSales=10,920, saleCount=4, 6 months of activity; dialog opens correctly
+
+### 3. Profit Margin Analytics Card (HIGH priority)
+- **Component**: Built `ProfitMarginCard` showing:
+  - Average margin % badge in header
+  - Per-fuel-type breakdown with: color dot, name, profit per liter (emerald), margin % badge (color-coded: green ≥12%, amber 8-12%, red <8%)
+  - Selling price + cost price labels
+  - Progress bar (color-coded by margin health)
+- **Integration**: Added to dashboard in a 3-column grid alongside Price History chart (chart takes 2 cols, profit margin takes 1 col)
+- **Verified**: VLM confirmed card visible showing per-fuel profit margins with progress bars and percentages
+
+### 4. Translation Keys Added (~25 new keys)
+- Suppliers: suppliers, addSupplier, editSupplier, supplierName, contactPerson, paySupplier, payAmount, totalPayable, refillsCount
+- Customer detail: customerDetails, customerProfile, salesHistory, paymentHistory, avgSaleValue, lastSale, monthlyActivity, totalPaid, noSalesHistory, noPayments, viewDetails
+- Other: avg
+- Added to all 3 languages (en/da/ps)
+
+### 5. Type Updates
+- Added `Supplier` interface to types.ts
+- Added `CustomerDetail` interface with summary, salesByFuelType, monthlyActivity, sales, payments
+- Added `Payment` interface
+- Updated `Refill` interface: `supplier` → `supplierId` + `supplier?: Supplier | null`
+- Added "suppliers" to ViewKey union
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Suppliers API: returns 2 suppliers (Kabul Fuel Supply, Ariana Petroleum)
+- ✅ Customer Detail API: returns full customer profile with sales, payments, monthly activity, fuel breakdown
+- ✅ Suppliers module: UI structure verified (summary cards, table, search, add button)
+- ✅ Customer Detail dialog: opens with header, balance banner, KPI cards, charts, tables
+- ✅ Profit Margin card: VLM-verified showing per-fuel margins with progress bars
+- ✅ Refills module: updated to use supplier dropdown instead of text input
+- ✅ Command Palette: includes suppliers with Building2 icon
+- ✅ All features work in Dari (RTL) with proper translations
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **Dev server stability**: The sandbox environment kills the background dev server process periodically after requests. Used `setsid` to mitigate. Production deployment would not have this issue.
+- **React Query staleTime**: The 30s staleTime in providers.tsx means data may show stale (0) on first load after seeding. Could reduce staleTime or add refetchOnMount.
+- **Data backup/import**: Settings has JSON export but no import. Could add restore from backup.
+- **Authentication**: Still no login system
+- **Receipt customization**: Could add logo upload and custom footer text in settings
+- **Anomaly detection**: Could add alerts for unusual sales patterns
+- **Bulk sale export**: Could add date-range bulk export in Sales module
+
+## Priority Recommendations for Next Phase
+1. **MEDIUM**: Add data import/restore from JSON backup
+2. **MEDIUM**: Add anomaly detection alerts (unusual sales patterns, pump efficiency drops)
+3. **LOW**: Add authentication/login for multi-user scenarios
+4. **LOW**: Add receipt customization (logo, footer text) in settings
+5. **LOW**: Add bulk sale export by date range
+6. **LOW**: Add proper print styles for shift summary

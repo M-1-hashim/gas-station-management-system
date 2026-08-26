@@ -13,6 +13,7 @@ import {
   Clock,
   Package,
   Truck,
+  Building2,
   BarChart3,
   Settings,
   Menu,
@@ -48,6 +49,7 @@ import { StaffModule } from "./modules/staff";
 import { ShiftsModule } from "./modules/shifts";
 import { ProductsModule } from "./modules/products";
 import { RefillsModule } from "./modules/refills";
+import { SuppliersModule } from "./modules/suppliers";
 import { ReportsModule } from "./modules/reports";
 import { SettingsModule } from "./modules/settings";
 import { QuickSaleFab } from "./quick-sale-fab";
@@ -62,6 +64,7 @@ const navItems: { key: ViewKey; icon: typeof LayoutDashboard; label: string }[] 
   { key: "fuelTypes", icon: Droplet, label: "fuelTypes" },
   { key: "pumps", icon: Gauge, label: "pumps" },
   { key: "refills", icon: Truck, label: "refills" },
+  { key: "suppliers", icon: Building2, label: "suppliers" },
   { key: "customers", icon: Users, label: "customers" },
   { key: "expenses", icon: Wallet, label: "expenses" },
   { key: "products", icon: Package, label: "products" },
@@ -148,7 +151,8 @@ export function AppShell({ station }: { station: Station | null }) {
       case "fuelTypes": return <FuelTypesModule />;
       case "pumps": return <PumpsModule />;
       case "refills": return <RefillsModule />;
-      case "customers": return <CustomersModule />;
+      case "suppliers": return <SuppliersModule />;
+      case "customers": return <CustomersModule station={station} />;
       case "expenses": return <ExpensesModule />;
       case "products": return <ProductsModule />;
       case "staff": return <StaffModule />;

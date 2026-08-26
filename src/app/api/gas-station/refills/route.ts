@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const refills = await db.refill.findMany({
-      include: { tank: { include: { fuelType: true } } },
+      include: { tank: { include: { fuelType: true } }, supplier: true },
       orderBy: { date: "desc" },
       take: 100,
     });
@@ -28,12 +28,12 @@ export async function POST(req: NextRequest) {
         liters,
         costPerLiter,
         totalCost,
-        supplier: body.supplier || null,
+        supplierId: body.supplierId || null,
         invoiceNo: body.invoiceNo || null,
         date: body.date ? new Date(body.date) : new Date(),
         note: body.note || null,
       },
-      include: { tank: { include: { fuelType: true } } },
+      include: { tank: { include: { fuelType: true } }, supplier: true },
     });
 
     // Increase tank level
@@ -41,6 +41,14 @@ export async function POST(req: NextRequest) {
       where: { id: body.tankId },
       data: { currentLevel: { increment: liters } },
     });
+
+    // Increase supplier balance (payable)
+    if (body.supplierId) {
+      await db.supplier.update({
+        where: { id: body.supplierId },
+        data: { balance: { increment: totalCost } },
+      });
+    }
 
     return NextResponse.json(refill);
   } catch (error) {

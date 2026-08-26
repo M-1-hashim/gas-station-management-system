@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "../stat-card";
 import { DailyTargetCard } from "../daily-target-card";
 import { PriceHistoryChart } from "../price-history-chart";
+import { ProfitMarginCard } from "../profit-margin-card";
 import { useLanguage } from "../hooks";
 import { formatCurrency, formatLiters, formatTime, isToday } from "@/lib/format";
 import type { DashboardData, ViewKey } from "@/lib/types";
@@ -546,8 +547,13 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
         </Card>
       </div>
 
-      {/* Price History Chart */}
-      <PriceHistoryChart />
+      {/* Price History + Profit Margin */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PriceHistoryChart />
+        </div>
+        <ProfitMarginCard />
+      </div>
     </div>
   );
 }

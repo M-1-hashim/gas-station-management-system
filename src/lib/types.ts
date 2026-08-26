@@ -125,10 +125,55 @@ export interface Refill {
   liters: number;
   costPerLiter: number;
   totalCost: number;
-  supplier: string | null;
+  supplierId: string | null;
+  supplier?: Supplier | null;
   invoiceNo: string | null;
   date: string;
   note: string | null;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  nameDa: string | null;
+  namePs: string | null;
+  phone: string | null;
+  address: string | null;
+  contactPerson: string | null;
+  balance: number;
+  active: boolean;
+  _count?: { refills: number };
+}
+
+export interface CustomerDetail {
+  customer: Customer;
+  summary: {
+    totalSales: number;
+    totalLiters: number;
+    totalPaid: number;
+    currentBalance: number;
+    creditTotal: number;
+    cashTotal: number;
+    saleCount: number;
+    paymentCount: number;
+    avgSaleValue: number;
+    lastSaleDate: string | null;
+    recentSaleCount: number;
+    recentSaleTotal: number;
+  };
+  salesByFuelType: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number; count: number }[];
+  monthlyActivity: { month: string; label: string; amount: number; count: number }[];
+  sales: Sale[];
+  payments: Payment[];
+}
+
+export interface Payment {
+  id: string;
+  customerId: string;
+  amount: number;
+  method: string;
+  note: string | null;
+  date: string;
 }
 
 export interface DashboardData {
@@ -216,5 +261,6 @@ export type ViewKey =
   | "shifts"
   | "products"
   | "refills"
+  | "suppliers"
   | "reports"
   | "settings";
