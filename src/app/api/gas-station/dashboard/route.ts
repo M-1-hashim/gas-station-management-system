@@ -125,6 +125,26 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "desc" },
     });
 
+    // Expense trend: last 14 days
+    const expenseTrend: { date: string; label: string; amount: number; count: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const dayStart = new Date(now);
+      dayStart.setDate(dayStart.getDate() - i);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      const dayExpenses = await db.expense.findMany({
+        where: { date: { gte: dayStart, lt: dayEnd } },
+        select: { amount: true },
+      });
+      expenseTrend.push({
+        date: dayStart.toISOString().split("T")[0],
+        label: dayStart.toLocaleDateString("en", { day: "numeric", month: "short" }),
+        amount: dayExpenses.reduce((sum, e) => sum + e.amount, 0),
+        count: dayExpenses.length,
+      });
+    }
+
     // Weekly comparison: last week vs this week
     const startOfLastWeek = new Date(startOfWeek);
     startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
@@ -227,6 +247,7 @@ export async function GET(req: NextRequest) {
       topFuelTypes,
       recentSales,
       recentExpenses,
+      expenseTrend,
     });
   } catch (error) {
     console.error("Dashboard error:", error);

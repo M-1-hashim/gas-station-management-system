@@ -203,6 +203,7 @@ export interface DashboardData {
   topFuelTypes: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number }[];
   recentSales: Sale[];
   recentExpenses: Expense[];
+  expenseTrend: { date: string; label: string; amount: number; count: number }[];
 }
 
 export interface ReportData {

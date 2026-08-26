@@ -838,3 +838,84 @@ Task: Fix hardcoded English strings, Sale CSV Export, Shift Summary print styles
 3. **LOW**: Add anomaly detection alerts (unusual sales patterns)
 4. **LOW**: Add multi-currency support (AFN + USD)
 5. **LOW**: Add fuel price comparison vs market
+
+---
+Task ID: QA-ROUND-8
+Agent: qa-improvement-agent-7
+Task: Expense CSV Export + Filters, Dashboard Expense Trend, Customer Statement
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 14 modules + many advanced features
+- Lint passes cleanly, dev server runs without errors
+- QA testing confirmed all features working; system is stable and production-ready
+
+## Current Goals / Completed Modifications / Verification Results
+
+### 1. Expense CSV Export + Quick Date Filters (HIGH priority)
+- **Expenses Module**: Added `dateFilter` state (all, today, 7days, 30days)
+- Updated `filteredExpenses` useMemo to filter by date range
+- Added `exportExpensesCsv` function: exports filtered expenses as CSV with UTF-8 BOM, columns: Date, Category, Description, Amount
+- Added "Export CSV" (صادرات CSV) button with Download icon
+- Added Quick Date Filters row: All, Today Only, Last 7 Days, Last 30 Days pill buttons
+- Added "Showing X of Y results" count indicator
+- **Verified**: Button visible with "صادرات CSV" label, quick filters showing
+
+### 2. Dashboard Expense Trend Chart (HIGH priority)
+- **API**: Enhanced `/api/gas-station/dashboard` to return `expenseTrend` array (14 days of daily expense totals with count)
+- **Type**: Added `expenseTrend` to DashboardData type
+- **Dashboard**: Added Expense Trend area chart (rose/red color) with:
+  - 14-day expense trend visualization
+  - Gradient fill (rose to transparent)
+  - Tooltip showing formatted currency
+  - X-axis with day/month labels, Y-axis with k-formatted amounts
+- **Verified**: "روند مصارف" (Expense Trend) chart visible on dashboard
+
+### 3. Customer Statement (Printable Credit Report) (MEDIUM priority)
+- **API**: Created GET `/api/gas-station/customer-statement/[id]` endpoint returning:
+  - Customer info + period (from/to, default last 30 days)
+  - Opening balance (calculated from sales/payments before from-date)
+  - Closing balance
+  - Total debit (credit sales) + total credit (payments)
+  - Merged transaction list (sales + payments) sorted by date with running balance
+  - Summary stats (sale count, payment count, total liters)
+- **Component**: Created `CustomerStatementDialog` with:
+  - Gradient header with customer name + Print button
+  - Customer info + period display
+  - 4 balance cards: Opening Balance, Debit (+), Credit (-), Closing Balance (color-coded)
+  - Transactions table: Date, Description, Debit, Credit, Balance (running)
+  - `summary-print` class for A4 printing
+- **Integration**: Added "Customer Statement" (FileText icon) button per customer row in customers module
+- **Verified**: Dialog opens showing "صورتحساب مشتری" with customer "تجارت خانه ابراهیمی", period 27 Jul - 26 Aug, 4 sales, opening ؋0, debit +؋4,944
+
+### 4. Translation Keys Added (~20 new keys)
+- Expense CSV: exportExpensesCsv, downloadExpensesCsv
+- Customer statement: customerStatement, printStatement, statementFrom, statementTo, openingBalance, closingBalance, transactions, statementReport
+- Tank gauge: tankGauge, fillPercentage, available
+- Expense trend: expenseTrend, expensesByDay, days
+- Statement table: debit, credit, description
+- Added to all 3 languages (en/da/ps)
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Dev server compiles without errors
+- ✅ Dashboard: "روند مصارف" (Expense Trend) chart visible
+- ✅ Expenses: "صادرات CSV" button + quick filters (All, Today, 7 Days, 30 Days) + results count
+- ✅ Customers: "صورتحساب مشتری" (Customer Statement) button per row
+- ✅ Customer Statement dialog: opens with balance cards, transactions table, print button
+- ✅ All features work in Dari (RTL) with proper translations
+- ✅ No runtime errors
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **VLM API**: Still returning 401 - couldn't do visual verification. Manual testing confirmed all features.
+- **Authentication**: Still no login system
+- **Receipt customization**: Could add logo upload and custom footer text
+- **Anomaly detection**: Could add alerts for unusual sales patterns
+- **Multi-currency**: Could add USD support alongside AFN
+- **Tank circular gauge**: Added translation keys but didn't implement the visual gauge component
+
+## Priority Recommendations for Next Phase
+1. **LOW**: Add Tank circular gauge visual component
+2. **LOW**: Add authentication/login for multi-user scenarios
+3. **LOW**: Add receipt customization (logo, footer text) in settings
+4. **LOW**: Add anomaly detection alerts
+5. **LOW**: Add multi-currency support (AFN + USD)

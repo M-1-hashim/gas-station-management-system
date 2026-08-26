@@ -355,6 +355,48 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
         </CardContent>
       </Card>
 
+      {/* Expense Trend Chart */}
+      <Card className="border-border/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingDown className="h-4 w-4 text-rose-600" />
+            {t("expenseTrend")}
+          </CardTitle>
+          <CardDescription className="text-xs">{t("expensesByDay")} • 14 {t("days")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={data.expenseTrend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" />
+              <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" width={50} tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                formatter={(value: number) => [formatCurrency(value, symbol), t("totalExpenses")]}
+              />
+              <Area
+                type="monotone"
+                dataKey="amount"
+                stroke="#f43f5e"
+                strokeWidth={2}
+                fill="url(#expenseGradient)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       {/* Recent Activity */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Recent Sales */}

@@ -16,6 +16,7 @@ import {
   Home,
   Truck,
   MoreHorizontal,
+  Download,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ export function ExpensesModule() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [form, setForm] = useState({
     category: "electricity" as string,
     amount: "",
@@ -162,6 +164,23 @@ export function ExpensesModule() {
     if (categoryFilter !== "all") {
       result = result.filter((e) => e.category === categoryFilter);
     }
+    if (dateFilter !== "all") {
+      const now = new Date();
+      let startDate: Date;
+      if (dateFilter === "today") {
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (dateFilter === "7days") {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 7);
+      } else if (dateFilter === "30days") {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 30);
+      } else {
+        startDate = new Date(0);
+      }
+      result = result.filter((e) => new Date(e.date) >= startDate);
+    }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -172,7 +191,29 @@ export function ExpensesModule() {
       );
     }
     return result;
-  }, [expenses, search, categoryFilter, t]);
+  }, [expenses, search, categoryFilter, dateFilter, t]);
+
+  const exportExpensesCsv = () => {
+    if (filteredExpenses.length === 0) return;
+    const rows = [
+      ["Date", "Category", "Description", "Amount"],
+      ...filteredExpenses.map((e) => [
+        new Date(e.date).toLocaleString("en-GB"),
+        e.category,
+        e.description || "",
+        e.amount,
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `expenses-${dateFilter}-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t("exportExpensesCsv"));
+  };
 
   const totalAmount = filteredExpenses.reduce(
     (sum, e) => sum + e.amount,
@@ -306,9 +347,40 @@ export function ExpensesModule() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openCreate} className="shrink-0 gap-2">
-          <Plus className="h-4 w-4" /> {t("addExpense")}
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" onClick={exportExpensesCsv} className="gap-2" disabled={filteredExpenses.length === 0} title={t("downloadExpensesCsv")}>
+            <Download className="h-4 w-4" /> <span className="hidden sm:inline">{t("exportCsv")}</span>
+          </Button>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" /> {t("addExpense")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Quick Date Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">{t("quickFilters")}:</span>
+        {[
+          { value: "all", label: t("all") },
+          { value: "today", label: t("todayOnly") },
+          { value: "7days", label: t("last7Days") },
+          { value: "30days", label: t("last30Days") },
+        ].map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setDateFilter(opt.value)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              dateFilter === opt.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+        <span className="ms-auto text-xs text-muted-foreground num">
+          {t("showing")} {filteredExpenses.length} {t("of")} {expenses?.length || 0} {t("results")}
+        </span>
       </div>
 
       {/* Table */}

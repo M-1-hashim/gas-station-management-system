@@ -11,6 +11,7 @@ import {
   Phone,
   MapPin,
   Eye,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ import {
   useCustomAction,
 } from "../api-hooks";
 import { CustomerDetailDialog } from "../customer-detail-dialog";
+import { CustomerStatementDialog } from "../customer-statement-dialog";
 import { formatCurrency } from "@/lib/format";
 import type { Customer, Station } from "@/lib/types";
 
@@ -79,6 +81,8 @@ export function CustomersModule({ station }: { station?: Station | null }) {
   const [payCustomer, setPayCustomer] = useState<Customer | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [statementId, setStatementId] = useState<string | null>(null);
+  const [statementOpen, setStatementOpen] = useState(false);
   const [payForm, setPayForm] = useState({
     amount: "",
     method: "cash",
@@ -422,6 +426,15 @@ export function CustomersModule({ station }: { station?: Station | null }) {
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-violet-600 dark:text-violet-400"
+                          onClick={() => { setStatementId(c.id); setStatementOpen(true); }}
+                          title={t("customerStatement")}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                        </Button>
                         {c.balance > 0 && (
                           <Button
                             variant="ghost"
@@ -544,6 +557,14 @@ export function CustomersModule({ station }: { station?: Station | null }) {
         station={station ?? null}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+      />
+
+      {/* Customer Statement Dialog */}
+      <CustomerStatementDialog
+        customerId={statementId}
+        station={station ?? null}
+        open={statementOpen}
+        onOpenChange={setStatementOpen}
       />
     </div>
   );

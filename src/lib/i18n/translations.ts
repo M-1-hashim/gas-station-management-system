@@ -394,6 +394,29 @@ export const translations = {
     shiftSummaryReport: "Shift Summary Report",
     navigate: "navigate",
     select: "select",
+    // Expense CSV + filters
+    exportExpensesCsv: "Export Expenses CSV",
+    downloadExpensesCsv: "Download expenses as CSV",
+    // Customer statement
+    customerStatement: "Customer Statement",
+    printStatement: "Print Statement",
+    statementFrom: "From",
+    statementTo: "To",
+    openingBalance: "Opening Balance",
+    closingBalance: "Closing Balance",
+    transactions: "Transactions",
+    statementReport: "Statement Report",
+    // Tank gauge
+    tankGauge: "Tank Gauge",
+    fillPercentage: "Fill %",
+    available: "Available",
+    // Expense trend
+    expenseTrend: "Expense Trend",
+    expensesByDay: "Expenses by Day",
+    days: "days",
+    debit: "Debit",
+    credit: "Credit",
+    description: "Description",
   },
   da: {
     // App
@@ -778,6 +801,29 @@ export const translations = {
     shiftSummaryReport: "راپور خلاصه شفت",
     navigate: "حرکت",
     select: "انتخاب",
+    // Expense CSV + filters
+    exportExpensesCsv: "صادرات مصارف CSV",
+    downloadExpensesCsv: "دانلود مصارف به صورت CSV",
+    // Customer statement
+    customerStatement: "صورت‌حساب مشتری",
+    printStatement: "چاپ صورت‌حساب",
+    statementFrom: "از",
+    statementTo: "تا",
+    openingBalance: "باقی اول",
+    closingBalance: "باقی آخر",
+    transactions: "تراکنش‌ها",
+    statementReport: "راپور صورت‌حساب",
+    // Tank gauge
+    tankGauge: "گیج تانک",
+    fillPercentage: "درصد پر شدگی",
+    available: "موجود",
+    // Expense trend
+    expenseTrend: "روند مصارف",
+    expensesByDay: "مصارف روزانه",
+    days: "روز",
+    debit: "بدهکار",
+    credit: "بستانکار",
+    description: "تشریح",
   },
   ps: {
     // App
@@ -1162,6 +1208,29 @@ export const translations = {
     shiftSummaryReport: "د شیفټ لنډیز راپور",
     navigate: "حرکت",
     select: "ټاکنه",
+    // Expense CSV + filters
+    exportExpensesCsv: "د لګښتونو CSV صادرات",
+    downloadExpensesCsv: "لګښتونه د CSV په توګه ډاونلوډ کړئ",
+    // Customer statement
+    customerStatement: "د پیرودونکي حساب",
+    printStatement: "د حساب چاپ",
+    statementFrom: "له",
+    statementTo: "تر",
+    openingBalance: "لومړی پاتې",
+    closingBalance: "وروستنی پاتې",
+    transactions: "راکړې ورکړې",
+    statementReport: "د حساب راپور",
+    // Tank gauge
+    tankGauge: "د ټانک گیج",
+    fillPercentage: "د ډکیدو سلنه",
+    available: "موجود",
+    // Expense trend
+    expenseTrend: "د لګښت بهیر",
+    expensesByDay: "ورځني لګښتونه",
+    days: "ورځي",
+    debit: "پوروړی",
+    credit: "پور",
+    description: "تشریح",
   },
 } as const;
 
