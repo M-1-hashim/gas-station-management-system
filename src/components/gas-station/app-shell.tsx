@@ -176,7 +176,7 @@ export function AppShell({ station }: { station: Station | null }) {
           <div className="border-t border-sidebar-border p-3">
             <div className="rounded-lg bg-sidebar-accent/50 p-3 text-xs text-muted-foreground">
               <p className="font-medium text-sidebar-foreground">{t("manageYourStation")}</p>
-              <p className="mt-1">v1.0 • Offline Mode</p>
+              <p className="mt-1">{t("versionOffline")}</p>
             </div>
           </div>
         </aside>

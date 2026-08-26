@@ -241,6 +241,33 @@
   }
 }
 
+/* Print styles for shift summary / reports (A4) */
+@media print {
+  .summary-print,
+  .summary-print * {
+    visibility: visible;
+  }
+  .summary-print {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+  .summary-print .no-print {
+    display: none !important;
+  }
+  @page summary {
+    size: A4;
+    margin: 15mm;
+  }
+}
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, var(--primary), oklch(0.55 0.15 155));

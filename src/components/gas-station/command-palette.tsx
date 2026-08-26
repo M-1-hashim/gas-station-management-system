@@ -166,9 +166,9 @@ function PaletteInner({ onNavigate, onQuickSale }: { onNavigate: (v: ViewKey) =>
       <div className="flex items-center justify-between border-t border-border px-4 py-2 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-2">
           <kbd className="flex h-4 items-center rounded border bg-muted px-1">↑↓</kbd>
-          <span>navigate</span>
+          <span>{t("navigate")}</span>
           <kbd className="flex h-4 items-center rounded border bg-muted px-1">↵</kbd>
-          <span>select</span>
+          <span>{t("select")}</span>
         </div>
         <span className="opacity-70">⌘K</span>
       </div>

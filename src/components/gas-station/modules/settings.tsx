@@ -292,9 +292,9 @@ export function SettingsModule() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Database className="h-4 w-4 text-primary" />
-            Data Management
+            {t("dataManagement")}
           </CardTitle>
-          <CardDescription>Backup and restore your station data (Offline Mode)</CardDescription>
+          <CardDescription>{t("backupRestoreDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
@@ -303,12 +303,12 @@ export function SettingsModule() {
                 <Download className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Export Backup</p>
-                <p className="text-xs text-muted-foreground">Download all data as JSON file</p>
+                <p className="font-medium">{t("exportBackup")}</p>
+                <p className="text-xs text-muted-foreground">{t("downloadAllData")}</p>
               </div>
             </div>
             <Button variant="outline" onClick={exportBackup} className="gap-2">
-              <Download className="h-4 w-4" /> Export
+              <Download className="h-4 w-4" /> {t("export")}
             </Button>
           </div>
 
@@ -350,9 +350,9 @@ export function SettingsModule() {
             <div className="flex gap-3">
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
               <div className="text-sm">
-                <p className="font-medium text-amber-700 dark:text-amber-400">Offline System</p>
+                <p className="font-medium text-amber-700 dark:text-amber-400">{t("offlineSystem")}</p>
                 <p className="mt-1 text-amber-600 dark:text-amber-500">
-                  This system works completely offline. All data is stored locally on this computer. Make regular backups to avoid data loss.
+                  {t("offlineSystemDesc")}
                 </p>
               </div>
             </div>

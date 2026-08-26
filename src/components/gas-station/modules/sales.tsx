@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ShoppingCart, Search, Filter, Printer } from "lucide-react";
+import { Plus, Pencil, Trash2, ShoppingCart, Search, Filter, Printer, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,6 +168,32 @@ export function SalesModule({ station }: { station?: Station | null }) {
     deleteMut.mutate(sale.id, { onSuccess: () => toast.success(t("deletedSuccessfully")) });
   };
 
+  const exportSalesCsv = () => {
+    if (filteredSales.length === 0) return;
+    const rows = [
+      ["Date", "Fuel Type", "Liters", "Price/L", "Total", "Payment", "Customer", "Pump"],
+      ...filteredSales.map((s) => [
+        new Date(s.date).toLocaleString("en-GB"),
+        s.fuelType.name,
+        s.liters,
+        s.pricePerLiter,
+        s.totalAmount,
+        s.paymentType,
+        s.customer?.name || "",
+        s.pump?.name || "",
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sales-${dateFilter}-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t("exportCsv"));
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary */}
@@ -222,9 +248,14 @@ export function SalesModule({ station }: { station?: Station | null }) {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={openCreate} className="gap-2 shrink-0" disabled={!fuelTypes?.length}>
-            <Plus className="h-4 w-4" /> {t("newSale")}
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" onClick={exportSalesCsv} className="gap-2" disabled={filteredSales.length === 0} title={t("downloadCsv")}>
+              <Download className="h-4 w-4" /> <span className="hidden sm:inline">{t("exportCsv")}</span>
+            </Button>
+            <Button onClick={openCreate} className="gap-2" disabled={!fuelTypes?.length}>
+              <Plus className="h-4 w-4" /> {t("newSale")}
+            </Button>
+          </div>
         </div>
 
         {/* Quick Date Filters */}

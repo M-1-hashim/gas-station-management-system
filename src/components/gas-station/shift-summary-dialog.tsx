@@ -113,7 +113,7 @@ export function ShiftSummaryDialog({ shiftId, station, open, onOpenChange }: Shi
           </div>
         ) : (
           <ScrollArea className="max-h-[calc(90vh-72px)]">
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 summary-print">
               {/* Status Banner */}
               <div className={cn(
                 "flex items-center justify-between rounded-xl border-2 p-4",

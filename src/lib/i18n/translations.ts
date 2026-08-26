@@ -376,6 +376,24 @@ export const translations = {
     justNow: "Just now",
     minutesAgo: "minutes ago",
     autoRefresh: "Auto-refresh",
+    // Settings hardcoded fixes
+    dataManagement: "Data Management",
+    exportBackup: "Export Backup",
+    downloadAllData: "Download all data as JSON file",
+    backupRestoreDesc: "Backup and restore your station data (Offline Mode)",
+    offlineSystem: "Offline System",
+    offlineSystemDesc: "This system works completely offline. All data is stored locally on this computer. Make regular backups to avoid data loss.",
+    versionOffline: "v1.0 • Offline Mode",
+    export: "Export",
+    import: "Import",
+    // CSV export
+    exportCsv: "Export CSV",
+    downloadCsv: "Download sales as CSV",
+    // Print shift summary
+    printSummary: "Print Summary",
+    shiftSummaryReport: "Shift Summary Report",
+    navigate: "navigate",
+    select: "select",
   },
   da: {
     // App
@@ -742,6 +760,24 @@ export const translations = {
     justNow: "همین الان",
     minutesAgo: "دقیقه پیش",
     autoRefresh: "به‌روزرسانی خودکار",
+    // Settings hardcoded fixes
+    dataManagement: "مدیریت معلومات",
+    exportBackup: "صادرات بکاپ",
+    downloadAllData: "دانلود تمام معلومات به صورت فایل JSON",
+    backupRestoreDesc: "بکاپ و بازیافت معلومات تانک تیل شما (حالت آفلاین)",
+    offlineSystem: "سیستم آفلاین",
+    offlineSystemDesc: "این سیستم بطور کامل آفلاین کار می‌کند. تمام معلومات در این کمپیوتر ذخیره می‌شود. بکاپ‌های منظم بسازید تا از دست رفتن معلومات جلوگیری شود.",
+    versionOffline: "نسخه ۱.۰ • حالت آفلاین",
+    export: "صادرات",
+    import: "ورود",
+    // CSV export
+    exportCsv: "صادرات CSV",
+    downloadCsv: "دانلود فروشات به صورت CSV",
+    // Print shift summary
+    printSummary: "چاپ خلاصه",
+    shiftSummaryReport: "راپور خلاصه شفت",
+    navigate: "حرکت",
+    select: "انتخاب",
   },
   ps: {
     // App
@@ -1108,6 +1144,24 @@ export const translations = {
     justNow: "همدا اوس",
     minutesAgo: "دقیقې دمخه",
     autoRefresh: "خودکار تازه",
+    // Settings hardcoded fixes
+    dataManagement: "د معلوماتو مدیریت",
+    exportBackup: "د بکاپ صادرات",
+    downloadAllData: "ټول معلومات د JSON فایل په توګه ډاونلوډ کړئ",
+    backupRestoreDesc: "د خپل ټانک معلومات بکاپ او بیا راستون کړئ (آفلاین حالت)",
+    offlineSystem: "آفلاین سیسټم",
+    offlineSystemDesc: "دا سیسټم په بشپړه توګه آفلاین کار کوي. ټول معلومات په دې کمپیوټر کې خوندي کیږي. د معلوماتو د له لاسه ورکیدو څخه د مخنیوي لپاره منظم بکاپونه جوړ کړئ.",
+    versionOffline: "نسخه ۱.۰ • آفلاین حالت",
+    export: "صادرات",
+    import: "واردول",
+    // CSV export
+    exportCsv: "CSV صادرات",
+    downloadCsv: "پلورنه د CSV په توګه ډاونلوډ کړئ",
+    // Print shift summary
+    printSummary: "لنډیز چاپ",
+    shiftSummaryReport: "د شیفټ لنډیز راپور",
+    navigate: "حرکت",
+    select: "ټاکنه",
   },
 } as const;
 
