@@ -125,17 +125,97 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "desc" },
     });
 
+    // Weekly comparison: last week vs this week
+    const startOfLastWeek = new Date(startOfWeek);
+    startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+    const lastWeekSales = await db.sale.findMany({
+      where: { date: { gte: startOfLastWeek, lt: startOfWeek } },
+      select: { totalAmount: true, liters: true },
+    });
+    const lastWeekTotal = lastWeekSales.reduce((sum, s) => sum + s.totalAmount, 0);
+    const weekGrowth = lastWeekTotal > 0
+      ? ((weekSalesTotal - lastWeekTotal) / lastWeekTotal) * 100
+      : weekSalesTotal > 0 ? 100 : 0;
+
+    // Top customers by purchase amount (last 30 days)
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentCustomerSales = await db.sale.findMany({
+      where: { date: { gte: thirtyDaysAgo }, customerId: { not: null } },
+      include: { customer: true },
+    });
+    const customerTotals = new Map<string, { name: string; total: number; count: number }>();
+    for (const s of recentCustomerSales) {
+      if (!s.customerId || !s.customer) continue;
+      const existing = customerTotals.get(s.customerId);
+      if (existing) {
+        existing.total += s.totalAmount;
+        existing.count += 1;
+      } else {
+        customerTotals.set(s.customerId, { name: s.customer.name, total: s.totalAmount, count: 1 });
+      }
+    }
+    const topCustomers = Array.from(customerTotals.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    // Top fuel types by sales amount (last 30 days)
+    const recentSalesAll = await db.sale.findMany({
+      where: { date: { gte: thirtyDaysAgo } },
+      include: { fuelType: true },
+    });
+    const fuelTotals = new Map<string, { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number }>();
+    for (const s of recentSalesAll) {
+      const existing = fuelTotals.get(s.fuelTypeId);
+      if (existing) {
+        existing.liters += s.liters;
+        existing.amount += s.totalAmount;
+      } else {
+        fuelTotals.set(s.fuelTypeId, {
+          name: s.fuelType.name,
+          nameDa: s.fuelType.nameDa,
+          namePs: s.fuelType.namePs,
+          color: s.fuelType.color,
+          liters: s.liters,
+          amount: s.totalAmount,
+        });
+      }
+    }
+    const topFuelTypes = Array.from(fuelTotals.values())
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+
+    // Avg sale value today
+    const avgSaleValue = todaySales.length > 0 ? todaySalesTotal / todaySales.length : 0;
+
+    // Busiest hour today
+    const hourMap = new Map<number, number>();
+    for (const s of todaySales) {
+      const h = new Date(s.date).getHours();
+      hourMap.set(h, (hourMap.get(h) || 0) + 1);
+    }
+    let busiestHour = -1;
+    let busiestHourCount = 0;
+    for (const [h, c] of hourMap) {
+      if (c > busiestHourCount) { busiestHourCount = c; busiestHour = h; }
+    }
+
     return NextResponse.json({
       kpis: {
         todaySales: todaySalesTotal,
         todayProfit,
         todayExpenses: todayExpensesTotal,
         weekSales: weekSalesTotal,
+        lastWeekSales: lastWeekTotal,
+        weekGrowth,
         monthSales: monthSalesTotal,
         totalCustomers,
         totalCredit,
         activeShifts: activeShifts.length,
         lowStockAlerts: lowStockTanks.length + lowStockProducts.length,
+        avgSaleValue,
+        busiestHour,
+        transactionsToday: todaySales.length,
       },
       activeShifts,
       tanks,
@@ -143,6 +223,8 @@ export async function GET(req: NextRequest) {
       lowStockProducts,
       salesByFuelType,
       last7Days,
+      topCustomers,
+      topFuelTypes,
       recentSales,
       recentExpenses,
     });

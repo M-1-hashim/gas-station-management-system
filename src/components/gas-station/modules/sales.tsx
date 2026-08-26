@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Trash2, ShoppingCart, Search, Filter, Printer } from "lucide-react";
+import { Plus, Pencil, Trash2, ShoppingCart, Search, Filter, Printer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useLanguage } from "../hooks";
-import { useList, useCreate, useDelete } from "../api-hooks";
+import { useList, useCreate, useUpdate, useDelete } from "../api-hooks";
 import { ReceiptDialog } from "../receipt-dialog";
 import { formatCurrency, formatLiters, formatDateTime } from "@/lib/format";
 import type { Sale, FuelType, Pump, Customer, Shift, Station } from "@/lib/types";
@@ -48,9 +48,11 @@ export function SalesModule({ station }: { station?: Station | null }) {
   const { data: customers } = useList<Customer>("customers");
   const { data: shifts } = useList<Shift>("shifts");
   const createMut = useCreate("sales");
+  const updateMut = useUpdate("sales");
   const deleteMut = useDelete("sales");
 
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Sale | null>(null);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const [search, setSearch] = useState("");
   const [payFilter, setPayFilter] = useState<string>("all");
@@ -66,12 +68,26 @@ export function SalesModule({ station }: { station?: Station | null }) {
   };
 
   const openCreate = () => {
-    const openShift = shifts?.find((s) => s.status === "open");
+    setEditing(null);
     setForm({
       fuelTypeId: fuelTypes?.[0]?.id || "",
       pumpId: "", customerId: "",
       liters: "", pricePerLiter: String(fuelTypes?.[0]?.price || ""),
       paymentType: "cash", note: "",
+    });
+    setOpen(true);
+  };
+
+  const openEdit = (sale: Sale) => {
+    setEditing(sale);
+    setForm({
+      fuelTypeId: sale.fuelTypeId,
+      pumpId: sale.pumpId || "",
+      customerId: sale.customerId || "",
+      liters: String(sale.liters),
+      pricePerLiter: String(sale.pricePerLiter),
+      paymentType: sale.paymentType,
+      note: sale.note || "",
     });
     setOpen(true);
   };
@@ -118,9 +134,15 @@ export function SalesModule({ station }: { station?: Station | null }) {
       customerId: form.customerId || null,
       pumpId: form.pumpId || null,
     };
-    createMut.mutate(payload, {
-      onSuccess: () => { toast.success(t("savedSuccessfully")); setOpen(false); },
-    });
+    if (editing) {
+      updateMut.mutate({ id: editing.id, ...payload }, {
+        onSuccess: () => { toast.success(t("savedSuccessfully")); setOpen(false); setEditing(null); },
+      });
+    } else {
+      createMut.mutate(payload, {
+        onSuccess: () => { toast.success(t("savedSuccessfully")); setOpen(false); },
+      });
+    }
   };
 
   const handleDelete = (sale: Sale) => {
@@ -239,6 +261,9 @@ export function SalesModule({ station }: { station?: Station | null }) {
                     </TableCell>
                     <TableCell className="text-end">
                       <div className="flex items-center justify-end gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600" title={t("editSale")} onClick={() => openEdit(sale)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title={t("receipt")} onClick={() => setReceiptSale(sale)}>
                           <Printer className="h-3.5 w-3.5" />
                         </Button>
@@ -279,7 +304,7 @@ export function SalesModule({ station }: { station?: Station | null }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("newSaleTitle")}</DialogTitle>
+            <DialogTitle>{editing ? t("editSale") : t("newSaleTitle")}</DialogTitle>
             <DialogDescription>{t("sales")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-3">

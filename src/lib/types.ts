@@ -136,11 +136,16 @@ export interface DashboardData {
     todayProfit: number;
     todayExpenses: number;
     weekSales: number;
+    lastWeekSales: number;
+    weekGrowth: number;
     monthSales: number;
     totalCustomers: number;
     totalCredit: number;
     activeShifts: number;
     lowStockAlerts: number;
+    avgSaleValue: number;
+    busiestHour: number;
+    transactionsToday: number;
   };
   activeShifts: Shift[];
   tanks: Tank[];
@@ -148,6 +153,8 @@ export interface DashboardData {
   lowStockProducts: Product[];
   salesByFuelType: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number }[];
   last7Days: { date: string; label: string; total: number; profit: number; liters: number }[];
+  topCustomers: { name: string; total: number; count: number }[];
+  topFuelTypes: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number }[];
   recentSales: Sale[];
   recentExpenses: Expense[];
 }
@@ -168,6 +175,30 @@ export interface ReportData {
   salesByFuelType: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number; profit: number; cost: number }[];
   expensesByCategory: { category: string; amount: number }[];
   salesByDay: { date: string; amount: number }[];
+  sales: Sale[];
+  expenses: Expense[];
+}
+
+export interface ShiftSummary {
+  shift: Shift;
+  summary: {
+    totalSales: number;
+    totalLiters: number;
+    totalProfit: number;
+    cashTotal: number;
+    creditTotal: number;
+    cashCount: number;
+    creditCount: number;
+    saleCount: number;
+    totalExpenses: number;
+    netProfit: number;
+    expectedCash: number;
+    actualCash: number;
+    cashDifference: number;
+    durationHours: number;
+  };
+  salesByFuelType: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number; count: number }[];
+  hourlyActivity: { hour: number; amount: number }[];
   sales: Sale[];
   expenses: Expense[];
 }

@@ -151,7 +151,7 @@ export function AppShell({ station }: { station: Station | null }) {
       case "expenses": return <ExpensesModule />;
       case "products": return <ProductsModule />;
       case "staff": return <StaffModule />;
-      case "shifts": return <ShiftsModule />;
+      case "shifts": return <ShiftsModule station={station} />;
       case "reports": return <ReportsModule />;
       case "settings": return <SettingsModule />;
       default: return null;

@@ -14,6 +14,7 @@ import {
   Truck,
   BarChart3,
   Cylinder,
+  Receipt,
 } from "lucide-react";
 import {
   AreaChart,
@@ -136,9 +137,19 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
         />
       </div>
 
-      {/* Secondary KPIs */}
+      {/* Secondary KPIs - with weekly growth comparison */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard title={t("thisWeek")} value={formatCurrency(kpis.weekSales, symbol)} icon={BarChart3} color="blue" />
+        <StatCard
+          title={t("salesThisWeek")}
+          value={formatCurrency(kpis.weekSales, symbol)}
+          subtitle={`${t("lastWeek")}: ${formatCurrency(kpis.lastWeekSales, symbol)}`}
+          icon={BarChart3}
+          color="blue"
+          trend={{
+            value: `${kpis.weekGrowth >= 0 ? "+" : ""}${kpis.weekGrowth.toFixed(1)}%`,
+            positive: kpis.weekGrowth >= 0,
+          }}
+        />
         <StatCard title={t("thisMonth")} value={formatCurrency(kpis.monthSales, symbol)} icon={BarChart3} color="violet" />
         <StatCard
           title={t("activeShifts")}
@@ -154,6 +165,19 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
           color={kpis.lowStockAlerts > 0 ? "rose" : "emerald"}
           onClick={() => onNavigate?.("tanks")}
         />
+      </div>
+
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard title={t("transactionsToday")} value={String(kpis.transactionsToday)} icon={Receipt} color="emerald" />
+        <StatCard title={t("avgSaleValue")} value={formatCurrency(kpis.avgSaleValue, symbol)} icon={TrendingUp} color="amber" />
+        <StatCard
+          title={t("busiestHour")}
+          value={kpis.busiestHour >= 0 ? `${kpis.busiestHour}:00` : "—"}
+          icon={Clock}
+          color="violet"
+        />
+        <StatCard title={t("totalProfit")} value={formatCurrency(kpis.todayProfit, symbol)} icon={TrendingUp} color="primary" />
       </div>
 
       {/* Charts */}
@@ -422,6 +446,97 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
                 ))
               )}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Customers & Top Fuel Types */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Top Customers */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="h-4 w-4 text-primary" />
+              {t("topCustomers")}
+            </CardTitle>
+            <CardDescription className="text-xs">{t("thisMonth")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.topCustomers.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">{t("noData")}</div>
+            ) : (
+              <div className="space-y-2">
+                {data.topCustomers.map((cust, i) => {
+                  const maxTotal = data.topCustomers[0]?.total || 1;
+                  const pct = (cust.total / maxTotal) * 100;
+                  return (
+                    <div key={i} className="flex items-center gap-3 rounded-lg border border-border/50 p-2.5 hover:bg-muted/50 transition-colors">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate text-sm font-medium">{cust.name}</p>
+                          <p className="text-sm font-bold num shrink-0">{formatCurrency(cust.total, symbol)}</p>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground num shrink-0">{cust.count} {t("sales")}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Fuel Types */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Fuel className="h-4 w-4 text-primary" />
+              {t("topFuelTypes")}
+            </CardTitle>
+            <CardDescription className="text-xs">{t("thisMonth")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.topFuelTypes.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">{t("noData")}</div>
+            ) : (
+              <div className="space-y-3">
+                {data.topFuelTypes.map((ft, i) => {
+                  const maxAmount = data.topFuelTypes[0]?.amount || 1;
+                  const pct = (ft.amount / maxAmount) * 100;
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: ft.color }} />
+                          <span className="truncate text-sm font-medium">{fuelTypeName(ft)}</span>
+                        </div>
+                        <div className="text-end shrink-0">
+                          <p className="text-sm font-bold num">{formatCurrency(ft.amount, symbol)}</p>
+                          <p className="text-[10px] text-muted-foreground num">{formatLiters(ft.liters)}</p>
+                        </div>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${pct}%`, backgroundColor: ft.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

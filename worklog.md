@@ -336,3 +336,101 @@ Task: QA testing + new features (Quick Sale FAB, Receipt printing, Command Palet
 5. **MEDIUM**: Add supplier management module
 6. **LOW**: Add authentication/login for multi-user scenarios
 7. **LOW**: Add receipt customization (logo, footer text) in settings
+
+---
+Task ID: QA-ROUND-3
+Agent: qa-improvement-agent-2
+Task: Sale Edit, Shift Summary, Dashboard Insights (Top Customers/Fuel, Weekly Comparison, Quick Stats)
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 13 modules + Quick Sale FAB + Receipt Printing + Command Palette (from QA-ROUND-2)
+- Lint passes cleanly, dev server runs without errors
+- QA testing identified opportunities: Sale Edit functionality missing, Shift Summary/Reconciliation not available, Dashboard lacked Top Customers/Fuel insights and weekly growth comparison
+
+## Current Goals / Completed Modifications / Verification Results
+
+### 1. Sale Edit Functionality (HIGH priority)
+- **API**: Added PATCH `/api/gas-station/sales/[id]` endpoint with full reversal+reapply logic:
+  - Reverses OLD sale's tank level (adds back old liters), pump reading, and customer balance (if credit)
+  - Applies NEW sale's tank level (decrements new liters), pump reading, and customer balance (if credit)
+  - Updates the sale record with new fuelType, pump, liters, price, payment type, customer, note
+- **UI**: Added Pencil (edit) button in sales table actions column (amber color, between edit and delete)
+- Added `editing` state + `openEdit()` function that pre-fills the dialog form with the sale's current values
+- Modified `handleSubmit` to branch: if `editing` → useUpdate, else → useCreate
+- Dialog title dynamically shows "ویرایش فروش" (Edit Sale) or "ثبت فروش جدید" (New Sale)
+- **Verified**: Tested editing a sale (changed liters from 50.6 to 25), saved successfully, totals updated correctly
+
+### 2. Shift Summary Report (HIGH priority)
+- **API**: Created GET `/api/gas-station/shifts/[id]/summary` endpoint returning:
+  - Full shift + staff info
+  - Summary: totalSales, totalLiters, totalProfit, cashTotal, creditTotal, cashCount, creditCount, saleCount, totalExpenses, netProfit, expectedCash, actualCash, cashDifference, durationHours
+  - salesByFuelType (with count per fuel)
+  - hourlyActivity (sales amount per hour)
+  - All sales in the shift + expenses during shift day
+- **Component**: Created `ShiftSummaryDialog` — a comprehensive reconciliation view with:
+  - Gradient header with staff name + start time + print button
+  - Status banner (Active/Closed) with duration
+  - 4 KPI cards: Total Sales, Net Profit, Total Liters, Total Expenses
+  - **Cash Reconciliation card** (color-coded): Opening Cash, Cash Sales (+), Actual Cash, Difference (with Balanced/Surplus/Shortage indicators using CheckCircle2/AlertTriangle/AlertCircle icons)
+  - Payment Methods breakdown (cash vs credit with counts)
+  - Hourly Activity bar chart (Recharts)
+  - Sales Breakdown by fuel type table
+  - Recent Sales in shift table (scrollable)
+- **Integration**: 
+  - Added "View Shift Report" (FileBarChart icon) button per shift row in shifts table
+  - End Shift flow now auto-opens Shift Summary dialog after closing (shows reconciliation immediately)
+  - Added zebra striping to shifts table, improved hover effects
+  - Added Actions column to shifts table
+- **Verified**: Tested clicking report button → dialog opens with all sections (KPIs, reconciliation, payment methods, hourly chart, fuel breakdown, sales list)
+
+### 3. Dashboard Enhancements (MEDIUM priority)
+- **API**: Enhanced `/api/gas-station/dashboard` to return:
+  - `lastWeekSales` + `weekGrowth` (% change vs last week)
+  - `topCustomers` (top 5 by purchase amount, last 30 days, with count)
+  - `topFuelTypes` (top 5 by sales amount, last 30 days, with liters)
+  - `avgSaleValue` (today's average sale amount)
+  - `busiestHour` (hour with most sales today)
+  - `transactionsToday` (count)
+- **Weekly Comparison KPI**: Sales This Week card now shows subtitle "Last Week: ؋X" and trend badge "+X.X%" or "-X.X%" (green/rose)
+- **Quick Stats Row**: New 4-card row showing Transactions Today, Avg Sale Value, Busiest Hour, Total Profit
+- **Top Customers card**: Ranked list (1-5) with avatar numbers, name, total amount, progress bar (relative to top), and sales count
+- **Top Fuel Types card**: Fuel types with color dots, amount, liters, and colored progress bars
+- **Fixed bug**: `fuelName` was not defined in dashboard (should be `fuelTypeName`) — fixed reference
+- **Verified via VLM**: All sections visible — Top Customers, Top Fuel Types with progress bars, weekly growth -29.1%, quick stats (8 transactions, avg 2,096.88, busiest 6:00)
+
+### 4. Translation Keys Added (~40 new keys)
+- Shift Summary: shiftSummary, shiftReport, viewShiftReport, expectedCash, actualCash, cashDifference, cashSurplus, cashShortage, duration, hours, salesCount, hourlyActivity, reconciliation, balanced, shiftClosed, shiftActive, printShiftReport, closeShiftReport, salesBreakdown
+- Dashboard Insights: topCustomers, topFuelTypes, recentActivity, noActivity, salesThisWeek, salesLastWeek, lastWeek, growth, decline, noChange, comparedToLastWeek, avgSaleValue, busiestHour, transactionsToday, quickStats, insights
+- Added to all 3 languages (en/da/ps)
+
+### 5. Type Updates
+- Added `ShiftSummary` interface to types.ts
+- Extended `DashboardData.kpis` with lastWeekSales, weekGrowth, avgSaleValue, busiestHour, transactionsToday
+- Extended `DashboardData` with topCustomers and topFuelTypes arrays
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Dev server compiles without errors
+- ✅ Sale Edit: tested changing liters 50.6→25, saved successfully, totals updated
+- ✅ Shift Summary: dialog opens with KPIs, cash reconciliation, payment methods, hourly chart, fuel breakdown, sales list
+- ✅ Dashboard: Top Customers + Top Fuel Types with progress bars visible
+- ✅ Weekly comparison: -29.1% growth shown with trend badge
+- ✅ Quick stats: 8 transactions, avg 2,096.88 AFN, busiest hour 6:00
+- ✅ VLM verification confirmed all features working
+- ✅ No runtime errors
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **Print Shift Report**: Uses window.print() but the shift summary dialog has `no-print` class on the dialog wrapper — the print CSS may need adjustment to print the summary content properly (currently the receipt print CSS targets `.receipt-print` class only)
+- **Fuel price history**: Still not implemented - could track price changes over time
+- **Supplier management**: Refills reference suppliers as text; could add proper Supplier model
+- **Bulk sale actions**: Could add date-range bulk delete/export in Sales module
+- **Authentication**: Still no login system
+- **Receipt customization**: Could add logo upload and custom footer text in settings
+
+## Priority Recommendations for Next Phase
+1. **MEDIUM**: Fix shift summary print (add proper print styles for summary content)
+2. **MEDIUM**: Add fuel price history tracking with trend chart
+3. **MEDIUM**: Add supplier management module
+4. **LOW**: Add authentication/login for multi-user scenarios
+5. **LOW**: Add receipt customization (logo, footer text) in settings
+6. **LOW**: Add bulk sale export by date range

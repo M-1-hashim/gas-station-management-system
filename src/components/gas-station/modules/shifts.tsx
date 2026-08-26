@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Clock, Play, Square, User, Phone } from "lucide-react";
+import { Plus, Clock, Play, Square, User, Phone, FileBarChart, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +35,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useLanguage } from "../hooks";
 import { useList, useCreate, useUpdate } from "../api-hooks";
+import { ShiftSummaryDialog } from "../shift-summary-dialog";
 import { formatCurrency, formatDateTime, formatTime } from "@/lib/format";
-import type { Shift, Staff } from "@/lib/types";
+import type { Shift, Staff, Station } from "@/lib/types";
 
-export function ShiftsModule() {
+export function ShiftsModule({ station }: { station?: Station | null }) {
   const { t } = useLanguage();
   const { data: shifts, isLoading } = useList<Shift>("shifts");
   const { data: staff } = useList<Staff>("staff");
@@ -47,6 +48,8 @@ export function ShiftsModule() {
 
   const [startOpen, setStartOpen] = useState(false);
   const [endShift, setEndShift] = useState<Shift | null>(null);
+  const [summaryShiftId, setSummaryShiftId] = useState<string | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [startForm, setStartForm] = useState({ staffId: "", openingCash: "", note: "" });
   const [endForm, setEndForm] = useState({ closingCash: "", note: "" });
 
@@ -77,8 +80,23 @@ export function ShiftsModule() {
         closingCash: parseFloat(endForm.closingCash || "0"),
         note: endForm.note,
       },
-      { onSuccess: () => { toast.success(t("savedSuccessfully")); setEndShift(null); setEndForm({ closingCash: "", note: "" }); } }
+      {
+        onSuccess: () => {
+          toast.success(t("savedSuccessfully"));
+          const closedShiftId = endShift.id;
+          setEndShift(null);
+          setEndForm({ closingCash: "", note: "" });
+          // Auto-open shift summary after closing
+          setSummaryShiftId(closedShiftId);
+          setSummaryOpen(true);
+        },
+      }
     );
+  };
+
+  const openSummary = (shiftId: string) => {
+    setSummaryShiftId(shiftId);
+    setSummaryOpen(true);
   };
 
   const openShifts = shifts?.filter((s) => s.status === "open") || [];
@@ -170,7 +188,7 @@ export function ShiftsModule() {
       {/* All Shifts Table */}
       <Card className="border-border/60">
         <ScrollArea className="max-h-[500px]">
-          <Table>
+          <Table className="table-zebra">
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
                 <TableHead>{t("staff")}</TableHead>
@@ -179,27 +197,28 @@ export function ShiftsModule() {
                 <TableHead className="text-end">{t("openingCash")}</TableHead>
                 <TableHead className="text-end">{t("closingCash")}</TableHead>
                 <TableHead>{t("status")}</TableHead>
+                <TableHead className="text-end">{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((__, j) => (
+                    {Array.from({ length: 7 }).map((__, j) => (
                       <TableCell key={j}><Skeleton className="h-6" /></TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : shifts?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                     <Clock className="mx-auto mb-2 h-8 w-8 opacity-50" />
                     {t("noData")}
                   </TableCell>
                 </TableRow>
               ) : (
                 shifts?.map((shift) => (
-                  <TableRow key={shift.id} className="hover:bg-muted/50">
+                  <TableRow key={shift.id} className="hover:bg-primary/5 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
@@ -216,6 +235,17 @@ export function ShiftsModule() {
                       <Badge variant={shift.status === "open" ? "default" : "secondary"} className={shift.status === "open" ? "bg-emerald-600" : ""}>
                         {shift.status === "open" ? t("open") : t("closed")}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-primary"
+                        title={t("viewShiftReport")}
+                        onClick={() => openSummary(shift.id)}
+                      >
+                        <FileBarChart className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -295,6 +325,14 @@ export function ShiftsModule() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Shift Summary Dialog */}
+      <ShiftSummaryDialog
+        shiftId={summaryShiftId}
+        station={station ?? null}
+        open={summaryOpen}
+        onOpenChange={setSummaryOpen}
+      />
     </div>
   );
 }
