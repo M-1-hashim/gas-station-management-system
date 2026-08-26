@@ -28,6 +28,8 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  ComposedChart,
+  Line,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -156,18 +158,28 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
 
       {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Sales Overview - 7 days */}
+        {/* Sales & Profit Overview - 7 days */}
         <Card className="border-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              {t("salesOverview")}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                {t("salesOverview")}
+              </CardTitle>
+              <div className="flex items-center gap-3 text-[10px]">
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-primary" /> {t("totalSales")}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" /> {t("totalProfit")}
+                </span>
+              </div>
+            </div>
             <CardDescription className="text-xs">{t("thisWeek")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={data.last7Days} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <ComposedChart data={data.last7Days} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.35} />
@@ -184,16 +196,21 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
-                  formatter={(value: number) => [formatCurrency(value, symbol), t("totalSales")]}
+                  formatter={(value: number, name: string) => [
+                    formatCurrency(value, symbol),
+                    name === "total" ? t("totalSales") : t("totalProfit"),
+                  ]}
                 />
-                <Area
+                <Bar dataKey="total" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Line
                   type="monotone"
-                  dataKey="total"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
-                  fill="url(#salesGradient)"
+                  dataKey="profit"
+                  stroke="#f59e0b"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#f59e0b", r: 3 }}
+                  activeDot={{ r: 5 }}
                 />
-              </AreaChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

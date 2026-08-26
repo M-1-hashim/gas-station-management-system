@@ -229,3 +229,110 @@ Unresolved issues / next steps:
 - Could add more detailed shift reports (sales per shift)
 - Could add supplier management module
 - Reports module could add expense trend over time chart
+
+---
+Task ID: QA-ROUND-2
+Agent: qa-improvement-agent
+Task: QA testing + new features (Quick Sale FAB, Receipt printing, Command Palette, Dashboard improvements)
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 13 modules
+- All CRUD operations work, tri-lingual (Dari/Pashto/English) with RTL/LTR support
+- Lint passes cleanly, dev server runs without errors
+- Identified issues during QA: dashboard 7-day chart only showed one spike (data issue), missing POS-style quick checkout, no receipt printing, no global search/keyboard shortcuts, tables lacked zebra striping and footer totals
+
+## Current Goals / Completed Modifications / Verification Results
+
+### Bugs Fixed
+1. **Dashboard chart data issue**: Created `/api/gas-station/seed-history` endpoint that generates 56 historical sales across 7 days with closed shifts and daily expenses. Ran it to populate the 7-day chart.
+2. **Dashboard API enhancement**: Updated `/api/gas-station/dashboard` to return `profit` and `liters` per day in `last7Days` array (was only returning `total`). Updated `DashboardData` type accordingly.
+
+### New Features Added
+
+#### 1. Quick Sale FAB (POS-style fast checkout) — `src/components/gas-station/quick-sale-fab.tsx`
+- Floating action button (lightning icon) fixed at bottom-end, always accessible from any module
+- POS-style dialog with: big fuel-type selector buttons (color-coded), liter input with +/- steppers and quick preset buttons (+5, +10, +20, +30, +40, +50, +100), cash/credit toggle with emoji icons, customer selector (for credit), live total calculation
+- On save: creates sale, auto-decrements tank, shows receipt dialog with print option and "New Sale" button
+- Slide-in animation, badge indicator
+
+#### 2. Receipt Printing — `src/components/gas-station/receipt.tsx` + `receipt-dialog.tsx`
+- Thermal-printer-style receipt (320px wide, monospace font) with: station header (name, phone, address), invoice number, date/time, fuel details with previous/current pump readings and dispensed liters, rate per liter, amount due, received amount + change calculation, payment type, customer name, signature lines, thank-you message
+- Print styles in globals.css (@media print) - only the receipt prints, 80mm width
+- ReceiptDialog with received-amount input, change calculation, Print button, and New Sale button
+- Accessible from: Quick Sale success, Sales table receipt (printer) button
+
+#### 3. Command Palette (Cmd+K) — `src/components/gas-station/command-palette.tsx`
+- Global keyboard shortcut Cmd/Ctrl+K to open
+- Search box in header (desktop) with ⌘K hint badge
+- Lists Quick Sale action + all 13 navigation modules with icons
+- Fuzzy search across labels + keywords (en/da/ps)
+- Keyboard navigation: ↑↓ arrows, Enter to select, Esc to close
+- Remounts on open to reset state (avoids setState-in-effect lint rule)
+- Footer with keyboard hint legend
+
+#### 4. Dashboard Profit Chart
+- Replaced single-area chart with ComposedChart: green bars (Total Sales) + amber line (Total Profit) for 7 days
+- Legend dots above chart
+- Tooltip shows both sales and profit values
+
+#### 5. Sales Module Improvements
+- Added zebra striping (`table-zebra` CSS class) to sales table
+- Added footer total row showing count, total liters, total amount (sticky at bottom)
+- Added receipt (printer) button per row → opens ReceiptDialog
+- Improved hover effect (`hover:bg-primary/5`)
+- ReceiptDialog integration with station info
+
+#### 6. Global CSS / Styling Enhancements — `src/app/globals.css`
+- `.table-zebra` - alternating row backgrounds for tables
+- `.animate-slide-in` - FAB entrance animation
+- `.animate-scale-in` - modal entrance animation  
+- `.animate-fade-in` - content fade-in
+- `.shimmer` - loading shimmer effect
+- `.gradient-text` - gradient text fill
+- `.glow-primary` - focus glow effect
+- Print styles for receipts (@media print, 80mm)
+- `.num` class with tabular-nums font feature
+
+#### 7. Translation Keys Added (~50 new keys)
+- Quick Sale, Receipt, Command Palette, Profit Trend, Weekly Comparison, Payment Methods, Sale Details, Edit Sale, etc.
+- Added to all 3 languages (en/da/ps)
+- Fixed duplicate key conflicts (close, totalProfit, time, date2)
+
+#### 8. App Shell Integration
+- Header now includes Command Palette search trigger button (desktop)
+- Footer shows ⌘K hint + Command Palette label
+- QuickSaleFab renders globally (always accessible)
+- Cmd/Ctrl+K keyboard shortcut listener
+- Passes `station` to SalesModule for receipt context
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Dev server compiles without errors
+- ✅ Dashboard chart now shows 7 days of data (bars + profit line)
+- ✅ Quick Sale FAB works: tested 55L petrol = ؋3,575, receipt shown after save
+- ✅ Command Palette opens with Cmd+K, search filters correctly ("tank" → Tanks only)
+- ✅ Receipt dialog shows fuel details, total, received/change, print button
+- ✅ Sales table: zebra striping, footer totals (Total 64), receipt + delete buttons
+- ✅ Language switch Dari↔English works (RTL↔LTR) with all new features
+- ✅ Mobile responsive: FAB visible, cards stack, no overflow
+- ✅ VLM verification confirmed all visual improvements
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **Edit Sale functionality**: The PATCH endpoint exists but UI edit button not yet wired in sales table (currently only receipt + delete). Could add a Pencil edit button.
+- **Receipt print**: Uses window.print() which works in browser; for true offline thermal printer integration, would need native print driver. Current implementation prints to default printer.
+- **Sale detail view**: Could add a full-screen sale detail view with all info (shift, staff, notes, payment history for credit sales)
+- **Fuel price history**: Not yet implemented - could track price changes over time with a PriceHistory model
+- **Supplier management**: Refills reference suppliers as text; could add a proper Supplier model with CRUD
+- **Shift reports**: Could add a "shift summary" view showing all sales/expenses/cash reconciliation for a specific shift
+- **Dashboard weekly comparison**: Added `vsLastWeek` translation key but didn't implement the comparison calculation (would need last week's data query)
+- **Bulk sale export**: Reports has CSV export but could add date-range bulk actions in Sales module
+- **Authentication**: Still no login system - all data is local single-user
+
+## Priority Recommendations for Next Phase
+1. **HIGH**: Add Sale Edit functionality (PATCH UI in sales table)
+2. **HIGH**: Add Shift Summary report view (close shift → show full reconciliation)
+3. **MEDIUM**: Implement Weekly Comparison KPI (this week vs last week % change)
+4. **MEDIUM**: Add fuel price history tracking with trend chart
+5. **MEDIUM**: Add supplier management module
+6. **LOW**: Add authentication/login for multi-user scenarios
+7. **LOW**: Add receipt customization (logo, footer text) in settings

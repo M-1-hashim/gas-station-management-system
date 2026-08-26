@@ -147,7 +147,7 @@ export interface DashboardData {
   lowStockTanks: Tank[];
   lowStockProducts: Product[];
   salesByFuelType: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number }[];
-  last7Days: { date: string; label: string; total: number }[];
+  last7Days: { date: string; label: string; total: number; profit: number; liters: number }[];
   recentSales: Sale[];
   recentExpenses: Expense[];
 }

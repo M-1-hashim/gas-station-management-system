@@ -95,13 +95,20 @@ export async function GET(req: NextRequest) {
       dayEnd.setDate(dayEnd.getDate() + 1);
       const daySales = await db.sale.findMany({
         where: { date: { gte: dayStart, lt: dayEnd } },
-        select: { totalAmount: true },
+        include: { fuelType: true },
       });
       const dayTotal = daySales.reduce((sum, s) => sum + s.totalAmount, 0);
+      const dayProfit = daySales.reduce(
+        (sum, s) => sum + (s.pricePerLiter - s.fuelType.cost) * s.liters,
+        0
+      );
+      const dayLiters = daySales.reduce((sum, s) => sum + s.liters, 0);
       last7Days.push({
         date: dayStart.toISOString().split("T")[0],
         label: dayStart.toLocaleDateString("en", { weekday: "short" }),
         total: dayTotal,
+        profit: dayProfit,
+        liters: dayLiters,
       });
     }
 

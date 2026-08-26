@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ShoppingCart, Search, Filter } from "lucide-react";
+import { Plus, Trash2, ShoppingCart, Search, Filter, Printer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import {
   Select,
@@ -35,10 +36,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useLanguage } from "../hooks";
 import { useList, useCreate, useDelete } from "../api-hooks";
+import { ReceiptDialog } from "../receipt-dialog";
 import { formatCurrency, formatLiters, formatDateTime } from "@/lib/format";
-import type { Sale, FuelType, Pump, Customer, Shift } from "@/lib/types";
+import type { Sale, FuelType, Pump, Customer, Shift, Station } from "@/lib/types";
 
-export function SalesModule() {
+export function SalesModule({ station }: { station?: Station | null }) {
   const { t, language } = useLanguage();
   const { data: sales, isLoading } = useList<Sale>("sales");
   const { data: fuelTypes } = useList<FuelType>("fuel-types");
@@ -49,6 +51,7 @@ export function SalesModule() {
   const deleteMut = useDelete("sales");
 
   const [open, setOpen] = useState(false);
+  const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const [search, setSearch] = useState("");
   const [payFilter, setPayFilter] = useState<string>("all");
   const [form, setForm] = useState({
@@ -186,7 +189,7 @@ export function SalesModule() {
       {/* Table */}
       <Card className="border-border/60">
         <ScrollArea className="max-h-[600px]">
-          <Table>
+          <Table className="table-zebra">
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
                 <TableHead>{t("date")}</TableHead>
@@ -217,7 +220,7 @@ export function SalesModule() {
                 </TableRow>
               ) : (
                 filteredSales.map((sale) => (
-                  <TableRow key={sale.id} className="hover:bg-muted/50">
+                  <TableRow key={sale.id} className="hover:bg-primary/5 transition-colors">
                     <TableCell className="text-xs whitespace-nowrap num">{formatDateTime(sale.date)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -235,17 +238,42 @@ export function SalesModule() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-end">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-600" onClick={() => handleDelete(sale)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title={t("receipt")} onClick={() => setReceiptSale(sale)}>
+                          <Printer className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-600" title={t("delete")} onClick={() => handleDelete(sale)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
+            {!isLoading && filteredSales.length > 0 && (
+              <TableFooter className="sticky bottom-0 bg-muted/50 font-bold">
+                <TableRow>
+                  <TableCell colSpan={2}>{t("total")} ({filteredSales.length})</TableCell>
+                  <TableCell className="text-end num">{formatLiters(totalLiters)}</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-end num">{formatCurrency(totalAmount)}</TableCell>
+                  <TableCell colSpan={3}></TableCell>
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </ScrollArea>
       </Card>
+
+      {/* Receipt Dialog */}
+      <ReceiptDialog
+        sale={receiptSale}
+        station={station ?? null}
+        open={!!receiptSale}
+        onOpenChange={(o) => !o && setReceiptSale(null)}
+      />
+
 
       {/* New Sale Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>

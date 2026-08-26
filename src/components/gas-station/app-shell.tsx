@@ -21,6 +21,7 @@ import {
   Languages,
   Fuel,
   X,
+  Search,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,9 @@ import { ProductsModule } from "./modules/products";
 import { RefillsModule } from "./modules/refills";
 import { ReportsModule } from "./modules/reports";
 import { SettingsModule } from "./modules/settings";
+import { QuickSaleFab } from "./quick-sale-fab";
+import { CommandPalette } from "./command-palette";
+import { useEffect } from "react";
 
 const navItems: { key: ViewKey; icon: typeof LayoutDashboard; label: string }[] = [
   { key: "dashboard", icon: LayoutDashboard, label: "dashboard" },
@@ -78,6 +82,19 @@ export function AppShell({ station }: { station: Station | null }) {
   const { theme, setTheme } = useTheme();
   const [activeView, setActiveView] = useState<ViewKey>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Global keyboard shortcuts: Cmd/Ctrl+K for command palette, "q" for quick sale
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const navList = (
     <nav className="flex flex-col gap-1 px-3 py-2">
@@ -125,7 +142,7 @@ export function AppShell({ station }: { station: Station | null }) {
   const renderModule = () => {
     switch (activeView) {
       case "dashboard": return <DashboardModule onNavigate={handleNav} />;
-      case "sales": return <SalesModule />;
+      case "sales": return <SalesModule station={station} />;
       case "tanks": return <TanksModule />;
       case "fuelTypes": return <FuelTypesModule />;
       case "pumps": return <PumpsModule />;
@@ -197,6 +214,16 @@ export function AppShell({ station }: { station: Station | null }) {
               </p>
             </div>
 
+            {/* Command Palette Trigger (desktop) */}
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden md:flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground min-w-[180px]"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span className="text-xs">{t("searchModules")}</span>
+              <kbd className="ms-auto px-1.5 py-0.5 rounded border bg-background text-[10px] font-mono">⌘K</kbd>
+            </button>
+
             {/* Language Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -252,13 +279,32 @@ export function AppShell({ station }: { station: Station | null }) {
                 <Fuel className="h-4 w-4 text-primary" />
                 <span>{getStationName(station, language)}</span>
               </p>
-              <p className="text-xs">
-                {t("appName")} • {new Date().getFullYear()} • Offline System
+              <p className="text-xs flex items-center gap-3">
+                <span className="hidden sm:flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded border bg-muted text-[10px] font-mono">⌘K</kbd>
+                  <span className="opacity-70">{t("commandPalette")}</span>
+                </span>
+                <span>{t("appName")} • {new Date().getFullYear()}</span>
               </p>
             </div>
           </footer>
         </div>
       </div>
+
+      {/* Quick Sale FAB - always accessible */}
+      <QuickSaleFab station={station} />
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onNavigate={(v) => { handleNav(v); }}
+        onQuickSale={() => {
+          // Trigger FAB click by setting a flag - simpler: just open it via state
+          const fab = document.querySelector<HTMLButtonElement>("[aria-label=\"" + t("quickSale") + "\"]");
+          fab?.click();
+        }}
+      />
     </div>
   );
 }
