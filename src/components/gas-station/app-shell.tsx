@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -223,6 +223,7 @@ export function AppShell({ station }: { station: Station | null }) {
         {/* Mobile Sidebar */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side={dir === "rtl" ? "right" : "left"} className="w-72 p-0">
+            <SheetTitle className="sr-only">{t("appName")}</SheetTitle>
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-3">
                 <div className="flex-1">{sidebarHeader}</div>
