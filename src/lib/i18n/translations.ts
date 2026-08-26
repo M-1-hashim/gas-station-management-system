@@ -417,6 +417,20 @@ export const translations = {
     debit: "Debit",
     credit: "Credit",
     description: "Description",
+    // Sales vs Expenses
+    salesVsExpenses: "Sales vs Expenses",
+    netResult: "Net Result",
+    comparison: "Comparison",
+    profit: "Profit",
+    loss: "Loss",
+    breakEven: "Break Even",
+    // Report enhancements
+    profitAnalysis: "Profit Analysis",
+    expenseBreakdown: "Expense Breakdown",
+    monthlyComparison: "Monthly Comparison",
+    thisMonthSales: "This Month Sales",
+    lastMonthSales: "Last Month Sales",
+    revenueGrowth: "Revenue Growth",
   },
   da: {
     // App
@@ -824,6 +838,20 @@ export const translations = {
     debit: "بدهکار",
     credit: "بستانکار",
     description: "تشریح",
+    // Sales vs Expenses
+    salesVsExpenses: "فروشات در مقابل مصارف",
+    netResult: "نتیجه خالص",
+    comparison: "مقایسه",
+    profit: "سود",
+    loss: "زیان",
+    breakEven: "سر به سر",
+    // Report enhancements
+    profitAnalysis: "تحلیل سود",
+    expenseBreakdown: "تفکیک مصارف",
+    monthlyComparison: "مقایسه ماهانه",
+    thisMonthSales: "فروشات این ماه",
+    lastMonthSales: "فروشات ماه گذشته",
+    revenueGrowth: "رشد عایدات",
   },
   ps: {
     // App
@@ -1231,6 +1259,20 @@ export const translations = {
     debit: "پوروړی",
     credit: "پور",
     description: "تشریح",
+    // Sales vs Expenses
+    salesVsExpenses: "پلورنه په مقابل کی لګښتونه",
+    netResult: "خالص پایله",
+    comparison: "پرتله",
+    profit: "ګټه",
+    loss: "زیان",
+    breakEven: "سر به سر",
+    // Report enhancements
+    profitAnalysis: "د ګټې تحلیل",
+    expenseBreakdown: "د لګښتونو تفصیل",
+    monthlyComparison: "میاشتنی پرتله",
+    thisMonthSales: "دا میاشت پلورنه",
+    lastMonthSales: "تیره میاشت پلورنه",
+    revenueGrowth: "د عاید وده",
   },
 } as const;
 

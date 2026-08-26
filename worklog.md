@@ -919,3 +919,74 @@ Task: Expense CSV Export + Filters, Dashboard Expense Trend, Customer Statement
 3. **LOW**: Add receipt customization (logo, footer text) in settings
 4. **LOW**: Add anomaly detection alerts
 5. **LOW**: Add multi-currency support (AFN + USD)
+
+---
+Task ID: QA-ROUND-9
+Agent: qa-improvement-agent-8
+Task: Tank Circular Gauge, Sales vs Expenses Chart, Dashboard Layout Improvements
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 14 modules + many advanced features (Quick Sale FAB, Receipt Printing, Command Palette, Notifications, Daily Target, Price History, Customer Detail, Shift Summary, Profit Margin, CSV Exports, Customer Statement, Data Restore)
+- Lint passes cleanly, dev server runs without errors
+- System is production-ready with comprehensive offline functionality
+
+## Current Goals / Completed Modifications / Verification Results
+
+### 1. Tank Circular Gauge Visual (HIGH priority)
+- **Component**: Created `TankGauge` — a circular SVG progress gauge with:
+  - Animated circular progress (strokeDashoffset transition)
+  - Color-coded: green (normal), amber (low), red (critical)
+  - Drop shadow effect with color tint
+  - Center percentage display with color matching gauge state
+  - Configurable size (default 120px, used 100px in tank cards)
+- **Integration**: Updated TanksModule to display TankGauge alongside the linear progress bar:
+  - Gauge on the left (100px), linear progress + details on the right
+  - Both visualizations show the same data in complementary ways
+- **Verified**: 16 SVG circles on tanks page (2 per gauge × multiple tanks)
+
+### 2. Sales vs Expenses Comparison Chart (HIGH priority)
+- **Component**: Created `SalesVsExpensesChart` — a 7-day comparison bar chart with:
+  - Green bars for Sales, red bars for Expenses side-by-side
+  - Legend with translated labels
+  - Profit/Loss badge in header (emerald for profit, rose for loss)
+  - Summary stats: Total Sales, Total Expenses, Net Result (color-coded)
+  - Tooltip showing formatted currency values
+- **Data**: Merges dashboard's `last7Days` (sales) with `expenseTrend` (expenses) by date label
+- **Integration**: Added to dashboard in a 2-column grid alongside the Expense Trend chart
+- **Verified**: "فروشات در مقابل مصارف" (Sales vs Expenses) visible with "سود: ؋ 101,334.4" (Profit badge)
+
+### 3. Dashboard Layout Improvement
+- Reorganized the dashboard charts section:
+  - Sales vs Expenses chart and Expense Trend chart now side-by-side in a 2-column grid
+  - Both charts have matching height (220px) for visual consistency
+  - Improved visual balance and information density
+
+### 4. Translation Keys Added (~15 new keys)
+- Sales vs Expenses: salesVsExpenses, netResult, comparison, profit, loss, breakEven
+- Report enhancements: profitAnalysis, expenseBreakdown, monthlyComparison, thisMonthSales, lastMonthSales, revenueGrowth
+- Added to all 3 languages (en/da/ps)
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Dev server compiles without errors
+- ✅ Tank Gauge: 16 SVG circles rendering on tanks page (circular progress gauges)
+- ✅ Sales vs Expenses chart: "فروشات در مقابل مصارف" with profit badge "سود: ؋ 101,334.4"
+- ✅ Expense Trend chart: "روند مصارف" visible alongside comparison chart
+- ✅ Dashboard layout: 2-column grid for charts working
+- ✅ All features work in Dari (RTL) with proper translations
+- ✅ No runtime errors
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **VLM API**: Still returning 401 - couldn't do visual verification. Manual testing confirmed all features via DOM inspection.
+- **Authentication**: Still no login system
+- **Receipt customization**: Could add logo upload and custom footer text
+- **Anomaly detection**: Could add alerts for unusual sales patterns
+- **Multi-currency**: Could add USD support alongside AFN
+- **Reports module**: Could add the expense trend chart and profit analysis to the reports page
+
+## Priority Recommendations for Next Phase
+1. **LOW**: Add Reports module expense trend + profit analysis charts
+2. **LOW**: Add authentication/login for multi-user scenarios
+3. **LOW**: Add receipt customization (logo, footer text) in settings
+4. **LOW**: Add anomaly detection alerts
+5. **LOW**: Add multi-currency support (AFN + USD)

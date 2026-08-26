@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { useLanguage } from "../hooks";
 import { useList, useCreate, useUpdate, useDelete } from "../api-hooks";
+import { TankGauge } from "../tank-gauge";
 import { formatLiters, formatNumber } from "@/lib/format";
 import type { Tank, FuelType } from "@/lib/types";
 
@@ -189,24 +190,35 @@ export function TanksModule() {
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{t("currentLevel")}</span>
-                      <span className="font-semibold num">{formatNumber(tank.currentLevel)} / {formatNumber(tank.capacity)} L</span>
-                    </div>
-                    <Progress
-                      value={pct}
-                      className={`h-2.5 ${isCritical ? "[&>div]:bg-rose-500" : isLow ? "[&>div]:bg-amber-500" : ""}`}
+                  <div className="mt-4 flex items-center gap-4">
+                    {/* Circular Gauge */}
+                    <TankGauge
+                      currentLevel={tank.currentLevel}
+                      capacity={tank.capacity}
+                      minLevel={tank.minLevel}
+                      color={tank.fuelType.color}
+                      size={100}
                     />
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="num">{pct.toFixed(1)}%</span>
-                      {isLow && (
-                        <Badge variant="destructive" className={isCritical ? "pulse-warning" : ""}>
-                          <AlertTriangle className="me-1 h-3 w-3" />
-                          {isCritical ? "Critical" : t("lowStockAlerts")}
-                        </Badge>
+                    {/* Linear progress + details */}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{t("currentLevel")}</span>
+                        <span className="font-semibold num">{formatNumber(tank.currentLevel)} / {formatNumber(tank.capacity)} L</span>
+                      </div>
+                      <Progress
+                        value={pct}
+                        className={`h-2.5 ${isCritical ? "[&>div]:bg-rose-500" : isLow ? "[&>div]:bg-amber-500" : ""}`}
+                      />
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="num">{pct.toFixed(1)}%</span>
+                        {isLow && (
+                          <Badge variant="destructive" className={isCritical ? "pulse-warning" : ""}>
+                            <AlertTriangle className="me-1 h-3 w-3" />
+                            {isCritical ? "Critical" : t("lowStockAlerts")}
+                          </Badge>
                       )}
                     </div>
+                  </div>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
