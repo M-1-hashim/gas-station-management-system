@@ -270,3 +270,88 @@
 .glow-primary {
   box-shadow: 0 0 0 3px oklch(0.55 0.15 155 / 0.2);
 }
+
+/* Smooth scale on hover for interactive cards */
+.scale-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.scale-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 24px -8px oklch(0.55 0.15 155 / 0.25);
+}
+
+/* Stagger animation for list items */
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  animation: stagger-in 0.3s ease-out backwards;
+}
+
+/* Skeleton shimmer for loading */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.92 0.01 150) 0%,
+    oklch(0.96 0.01 150) 50%,
+    oklch(0.92 0.01 150) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.25 0.015 150) 0%,
+    oklch(0.3 0.015 150) 50%,
+    oklch(0.25 0.015 150) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Button press effect */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Focus ring for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Smooth scrollbar for dark mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.02 150);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.45 0.02 150);
+}
+
+/* Gradient border for special cards */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+              linear-gradient(135deg, oklch(0.55 0.15 155), oklch(0.7 0.17 70)) border-box;
+  border: 2px solid transparent;
+}
+
+/* Pulse dot for live indicators */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+.live-dot {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+/* Slide up animation for toasts/dialogs */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}

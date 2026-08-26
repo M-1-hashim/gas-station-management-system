@@ -73,7 +73,7 @@ export function SettingsModule() {
 
   const exportBackup = async () => {
     try {
-      const [station, fuelTypes, tanks, pumps, sales, customers, expenses, staff, shifts, products, refills] = await Promise.all([
+      const [station, fuelTypes, tanks, pumps, sales, customers, expenses, staff, shifts, products, refills, suppliers, priceHistory] = await Promise.all([
         fetch("/api/gas-station/settings").then((r) => r.json()),
         fetch("/api/gas-station/fuel-types").then((r) => r.json()),
         fetch("/api/gas-station/tanks").then((r) => r.json()),
@@ -85,8 +85,36 @@ export function SettingsModule() {
         fetch("/api/gas-station/shifts").then((r) => r.json()),
         fetch("/api/gas-station/products").then((r) => r.json()),
         fetch("/api/gas-station/refills").then((r) => r.json()),
+        fetch("/api/gas-station/suppliers").then((r) => r.json()),
+        fetch("/api/gas-station/price-history?days=365").then((r) => r.json()),
       ]);
-      const backup = { station, fuelTypes, tanks, pumps, sales, customers, expenses, staff, shifts, products, refills, exportedAt: new Date().toISOString() };
+
+      // Fetch all payments (need to iterate customers)
+      const paymentsPromises = (customers || []).map((c: { id: string }) =>
+        fetch(`/api/gas-station/customer-detail/${c.id}`).then((r) => r.json()).then((d) => d.payments || []).catch(() => [])
+      );
+      const paymentsArrays = await Promise.all(paymentsPromises);
+      const payments = paymentsArrays.flat();
+
+      const backup = {
+        station,
+        fuelTypes,
+        tanks,
+        pumps,
+        sales,
+        customers,
+        expenses,
+        staff,
+        shifts,
+        products,
+        refills,
+        suppliers,
+        payments,
+        priceHistory: (priceHistory || []).flatMap((ft: { history: { date: string; price: number; cost: number }[]; fuelTypeId: string }) =>
+          (ft.history || []).map((h) => ({ ...h, fuelTypeId: ft.fuelTypeId }))
+        ),
+        exportedAt: new Date().toISOString(),
+      };
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -98,6 +126,44 @@ export function SettingsModule() {
     } catch {
       toast.error(t("errorOccurred"));
     }
+  };
+
+  const restoreMut = useMutation({
+    mutationFn: async (data: unknown) => {
+      const res = await fetch("/api/gas-station/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Restore failed" }));
+        throw new Error(err.error);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success(t("restoreSuccess"));
+      // Reload page to refresh all data
+      setTimeout(() => window.location.reload(), 1500);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (!confirm(t("restoreWarning"))) return;
+        restoreMut.mutate(data);
+      } catch {
+        toast.error(t("errorOccurred"));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // Reset input
   };
 
   return (
@@ -244,6 +310,40 @@ export function SettingsModule() {
             <Button variant="outline" onClick={exportBackup} className="gap-2">
               <Download className="h-4 w-4" /> Export
             </Button>
+          </div>
+
+          {/* Restore Backup */}
+          <div className="flex items-center justify-between rounded-lg border border-amber-200 p-4 dark:border-amber-900">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
+                <Upload className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">{t("restoreBackup")}</p>
+                <p className="text-xs text-muted-foreground">{t("selectBackupFile")}</p>
+              </div>
+            </div>
+            <label className="cursor-pointer">
+              <span className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground">
+                <Upload className="h-4 w-4" />
+                {restoreMut.isPending ? t("refreshing") : t("restoreData")}
+              </span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={handleFileImport}
+                disabled={restoreMut.isPending}
+              />
+            </label>
+          </div>
+
+          {/* Restore warning */}
+          <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 dark:border-rose-900 dark:bg-rose-950/30">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+              <p className="text-xs text-rose-700 dark:text-rose-400">{t("restoreWarning")}</p>
+            </div>
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">

@@ -56,6 +56,7 @@ export function SalesModule({ station }: { station?: Station | null }) {
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const [search, setSearch] = useState("");
   const [payFilter, setPayFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [form, setForm] = useState({
     fuelTypeId: "", pumpId: "", customerId: "",
     liters: "", pricePerLiter: "", paymentType: "cash", note: "",
@@ -104,6 +105,23 @@ export function SalesModule({ station }: { station?: Station | null }) {
     if (payFilter !== "all") {
       result = result.filter((s) => s.paymentType === payFilter);
     }
+    if (dateFilter !== "all") {
+      const now = new Date();
+      let startDate: Date;
+      if (dateFilter === "today") {
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (dateFilter === "7days") {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 7);
+      } else if (dateFilter === "30days") {
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 30);
+      } else {
+        startDate = new Date(0);
+      }
+      result = result.filter((s) => new Date(s.date) >= startDate);
+    }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -114,7 +132,7 @@ export function SalesModule({ station }: { station?: Station | null }) {
       );
     }
     return result;
-  }, [sales, search, payFilter]);
+  }, [sales, search, payFilter, dateFilter]);
 
   const totalLiters = filteredSales.reduce((sum, s) => sum + s.liters, 0);
   const totalAmount = filteredSales.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -180,32 +198,60 @@ export function SalesModule({ station }: { station?: Station | null }) {
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("search")}
-              className="ps-9"
-            />
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("search")}
+                className="ps-9"
+              />
+            </div>
+            <Select value={payFilter} onValueChange={setPayFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <Filter className="me-2 h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("all")}</SelectItem>
+                <SelectItem value="cash">{t("cash")}</SelectItem>
+                <SelectItem value="credit">{t("credit")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={payFilter} onValueChange={setPayFilter}>
-            <SelectTrigger className="w-full sm:w-40">
-              <Filter className="me-2 h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("all")}</SelectItem>
-              <SelectItem value="cash">{t("cash")}</SelectItem>
-              <SelectItem value="credit">{t("credit")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <Button onClick={openCreate} className="gap-2 shrink-0" disabled={!fuelTypes?.length}>
+            <Plus className="h-4 w-4" /> {t("newSale")}
+          </Button>
         </div>
-        <Button onClick={openCreate} className="gap-2 shrink-0" disabled={!fuelTypes?.length}>
-          <Plus className="h-4 w-4" /> {t("newSale")}
-        </Button>
+
+        {/* Quick Date Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">{t("quickFilters")}:</span>
+          {[
+            { value: "all", label: t("all") },
+            { value: "today", label: t("todayOnly") },
+            { value: "7days", label: t("last7Days") },
+            { value: "30days", label: t("last30Days") },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setDateFilter(opt.value)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                dateFilter === opt.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <span className="ms-auto text-xs text-muted-foreground num">
+            {t("showing")} {filteredSales.length} {t("of")} {sales?.length || 0} {t("results")}
+          </span>
+        </div>
       </div>
 
       {/* Table */}

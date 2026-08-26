@@ -55,6 +55,7 @@ import { SettingsModule } from "./modules/settings";
 import { QuickSaleFab } from "./quick-sale-fab";
 import { CommandPalette } from "./command-palette";
 import { NotificationsDropdown } from "./notifications-dropdown";
+import { LiveClock } from "./live-clock";
 import { useEffect } from "react";
 
 const navItems: { key: ViewKey; icon: typeof LayoutDashboard; label: string }[] = [
@@ -218,6 +219,9 @@ export function AppShell({ station }: { station: Station | null }) {
                 })}
               </p>
             </div>
+
+            {/* Live Clock (desktop) */}
+            <LiveClock />
 
             {/* Command Palette Trigger (desktop) */}
             <button
