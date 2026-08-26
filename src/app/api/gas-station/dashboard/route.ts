@@ -157,6 +157,25 @@ export async function GET(req: NextRequest) {
       ? ((weekSalesTotal - lastWeekTotal) / lastWeekTotal) * 100
       : weekSalesTotal > 0 ? 100 : 0;
 
+    // Monthly comparison: this month vs last month
+    const startOfLastMonth = new Date(startOfMonth);
+    startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+    const lastMonthSales = await db.sale.findMany({
+      where: { date: { gte: startOfLastMonth, lt: startOfMonth } },
+      select: { totalAmount: true },
+    });
+    const lastMonthTotal = lastMonthSales.reduce((sum, s) => sum + s.totalAmount, 0);
+    const monthGrowth = lastMonthTotal > 0
+      ? ((monthSalesTotal - lastMonthTotal) / lastMonthTotal) * 100
+      : monthSalesTotal > 0 ? 100 : 0;
+
+    // Last month expenses
+    const lastMonthExpenses = await db.expense.findMany({
+      where: { date: { gte: startOfLastMonth, lt: startOfMonth } },
+      select: { amount: true },
+    });
+    const lastMonthExpenseTotal = lastMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
     // Top customers by purchase amount (last 30 days)
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -229,6 +248,9 @@ export async function GET(req: NextRequest) {
         lastWeekSales: lastWeekTotal,
         weekGrowth,
         monthSales: monthSalesTotal,
+        lastMonthSales: lastMonthTotal,
+        monthGrowth,
+        lastMonthExpenses: lastMonthExpenseTotal,
         totalCustomers,
         totalCredit,
         activeShifts: activeShifts.length,

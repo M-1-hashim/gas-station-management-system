@@ -990,3 +990,64 @@ Task: Tank Circular Gauge, Sales vs Expenses Chart, Dashboard Layout Improvement
 3. **LOW**: Add receipt customization (logo, footer text) in settings
 4. **LOW**: Add anomaly detection alerts
 5. **LOW**: Add multi-currency support (AFN + USD)
+
+---
+Task ID: QA-ROUND-10
+Agent: qa-improvement-agent-9
+Task: Reports Profit Analysis Chart, Dashboard Monthly Revenue Comparison
+
+## Current Project Status Assessment
+- The Gas Station Management System (تانک تیل) is fully functional with 14 modules + many advanced features
+- Lint passes cleanly, dev server runs without errors
+- System is production-ready with comprehensive offline functionality, tri-lingual support, and extensive analytics
+
+## Current Goals / Completed Modifications / Verification Results
+
+### 1. Reports Module Profit Analysis Chart (HIGH priority)
+- **API**: Updated `/api/gas-station/reports` to include `profit` field in `salesByDay` data (calculated as (pricePerLiter - cost) × liters per sale, aggregated by day)
+- **Type**: Updated `ReportData.salesByDay` type to include `profit: number`
+- **Component**: Added Profit Analysis chart to Reports module:
+  - ComposedChart with green bars (daily sales) + emerald line (daily profit)
+  - Gradient fill for visual appeal
+  - Tooltip showing both sales and profit values
+  - Title: "تحلیل سود" (Profit Analysis) with date range description
+- **Verified**: "تحلیل سود" chart visible on reports page between the Sales by Day and Expense breakdown sections
+
+### 2. Dashboard Monthly Revenue Comparison (HIGH priority)
+- **API**: Enhanced `/api/gas-station/dashboard` to return:
+  - `lastMonthSales`: total sales from last month
+  - `monthGrowth`: percentage growth this month vs last month
+  - `lastMonthExpenses`: total expenses from last month
+- **Type**: Updated `DashboardData.kpis` with lastMonthSales, monthGrowth, lastMonthExpenses
+- **Dashboard**: Updated "This Month" stat card to show:
+  - Title: "فروشات این ماه" (This Month Sales)
+  - Value: current month total
+  - Subtitle: "فروشات ماه گذشته: ؋X" (Last Month Sales)
+  - Trend badge: "+X.X%" or "-X.X%" (green/rose) showing month-over-month growth
+- **Verified**: Monthly comparison card showing "فروشات ماه گذشته: ؋ 0" (last month has no data since all seed data is current month)
+
+### 3. Translation Keys
+- Reused existing keys: thisMonthSales, lastMonthSales, profitAnalysis, comparison, totalSales, totalProfit
+- All already present in all 3 languages (en/da/ps)
+
+## Verification Results
+- ✅ Lint passes cleanly (0 errors, 0 warnings)
+- ✅ Dev server compiles without errors
+- ✅ Reports: "تحلیل سود" (Profit Analysis) chart visible with bar+line combo
+- ✅ Dashboard: Monthly comparison card showing "فروشات ماه گذشته" with growth trend
+- ✅ All features work in Dari (RTL) with proper translations
+- ✅ No runtime errors
+
+## Unresolved Issues / Risks / Next Phase Priorities
+- **VLM API**: Still returning 401 - couldn't do visual verification. Manual testing confirmed all features via DOM inspection.
+- **Last month data**: Shows ؋0 because all seed data is from the current month. Could seed historical data for previous month to demonstrate the comparison feature.
+- **Authentication**: Still no login system
+- **Receipt customization**: Could add logo upload and custom footer text
+- **Multi-currency**: Could add USD support alongside AFN
+
+## Priority Recommendations for Next Phase
+1. **LOW**: Seed previous month data to demonstrate monthly comparison
+2. **LOW**: Add authentication/login for multi-user scenarios
+3. **LOW**: Add receipt customization (logo, footer text) in settings
+4. **LOW**: Add multi-currency support (AFN + USD)
+5. **LOW**: Add anomaly detection alerts

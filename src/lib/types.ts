@@ -185,6 +185,9 @@ export interface DashboardData {
     lastWeekSales: number;
     weekGrowth: number;
     monthSales: number;
+    lastMonthSales: number;
+    monthGrowth: number;
+    lastMonthExpenses: number;
     totalCustomers: number;
     totalCredit: number;
     activeShifts: number;
@@ -221,7 +224,7 @@ export interface ReportData {
   };
   salesByFuelType: { name: string; nameDa: string | null; namePs: string | null; color: string; liters: number; amount: number; profit: number; cost: number }[];
   expensesByCategory: { category: string; amount: number }[];
-  salesByDay: { date: string; amount: number }[];
+  salesByDay: { date: string; amount: number; profit: number }[];
   sales: Sale[];
   expenses: Expense[];
 }

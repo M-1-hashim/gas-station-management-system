@@ -25,6 +25,8 @@ import {
   Cell,
   AreaChart,
   Area,
+  ComposedChart,
+  Line,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -312,6 +314,41 @@ export function ReportsModule() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Profit Analysis Chart */}
+          <Card className="border-border/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                {t("profitAnalysis")}
+              </CardTitle>
+              <CardDescription className="text-xs">{t("comparison")} • {formatDate(data.period.from)} — {formatDate(data.period.to)}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <ComposedChart data={data.salesByDay} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="reportProfitGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" tickFormatter={(v) => String(v).slice(5)} />
+                  <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" width={50} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px" }}
+                    formatter={(value: number, name: string) => [
+                      formatCurrency(value, symbol),
+                      name === "amount" ? t("totalSales") : t("totalProfit"),
+                    ]}
+                  />
+                  <Bar dataKey="amount" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={32} name="amount" />
+                  <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2.5} dot={{ fill: "#10b981", r: 3 }} name="profit" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
           {/* Expense breakdown + Fuel detail */}
           <div className="grid gap-4 lg:grid-cols-2">

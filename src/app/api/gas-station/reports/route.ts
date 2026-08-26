@@ -71,11 +71,14 @@ export async function GET(req: NextRequest) {
       expenseCategoryMap.set(e.category, (expenseCategoryMap.get(e.category) || 0) + e.amount);
     }
 
-    // Sales by day
-    const salesByDayMap = new Map<string, number>();
+    // Sales by day (with profit)
+    const salesByDayMap = new Map<string, { amount: number; profit: number }>();
     for (const s of sales) {
       const dayKey = new Date(s.date).toISOString().split("T")[0];
-      salesByDayMap.set(dayKey, (salesByDayMap.get(dayKey) || 0) + s.totalAmount);
+      const existing = salesByDayMap.get(dayKey) || { amount: 0, profit: 0 };
+      existing.amount += s.totalAmount;
+      existing.profit += (s.pricePerLiter - s.fuelType.cost) * s.liters;
+      salesByDayMap.set(dayKey, existing);
     }
 
     // Payment type breakdown
@@ -98,7 +101,7 @@ export async function GET(req: NextRequest) {
       salesByFuelType: Array.from(fuelTypeMap.values()),
       expensesByCategory: Array.from(expenseCategoryMap.entries()).map(([category, amount]) => ({ category, amount })),
       salesByDay: Array.from(salesByDayMap.entries())
-        .map(([date, amount]) => ({ date, amount }))
+        .map(([date, val]) => ({ date, amount: val.amount, profit: val.profit }))
         .sort((a, b) => a.date.localeCompare(b.date)),
       sales,
       expenses,

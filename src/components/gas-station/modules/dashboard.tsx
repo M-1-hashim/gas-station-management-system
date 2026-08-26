@@ -157,7 +157,17 @@ export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => v
             positive: kpis.weekGrowth >= 0,
           }}
         />
-        <StatCard title={t("thisMonth")} value={formatCurrency(kpis.monthSales, symbol)} icon={BarChart3} color="violet" />
+        <StatCard
+          title={t("thisMonthSales")}
+          value={formatCurrency(kpis.monthSales, symbol)}
+          subtitle={`${t("lastMonthSales")}: ${formatCurrency(kpis.lastMonthSales, symbol)}`}
+          icon={BarChart3}
+          color="violet"
+          trend={{
+            value: `${kpis.monthGrowth >= 0 ? "+" : ""}${kpis.monthGrowth.toFixed(1)}%`,
+            positive: kpis.monthGrowth >= 0,
+          }}
+        />
         <StatCard
           title={t("activeShifts")}
           value={String(kpis.activeShifts)}
