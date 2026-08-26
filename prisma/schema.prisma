@@ -1,0 +1,190 @@
+// Gas Station Management System (سیستم مدیریت تانک تیل)
+// Offline-first database schema for Afghan gas stations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Station info (singleton record)
+model Station {
+  id        String   @id @default("default")
+  name      String   @default("تانک تیل")
+  namePs    String?
+  nameDa    String?
+  owner     String?
+  phone     String?
+  address   String?
+  currency  String   @default("AFN")
+  currencySymbol String @default("؋")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Fuel types: Petrol (بنزین), Diesel (ډیزل), Kerosene (نفط), etc.
+model FuelType {
+  id        String   @id @default(cuid())
+  name      String
+  namePs    String?
+  nameDa    String?
+  price     Float    // price per liter in AFN
+  cost      Float    @default(0) // cost per liter
+  unit      String   @default("liter")
+  color     String   @default("#10b981")
+  icon      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tanks     Tank[]
+  sales     Sale[]
+}
+
+model Tank {
+  id           String   @id @default(cuid())
+  name         String
+  fuelTypeId   String
+  fuelType     FuelType @relation(fields: [fuelTypeId], references: [id])
+  capacity     Float    // liters
+  currentLevel Float    @default(0) // liters
+  minLevel     Float    @default(500) // alert threshold
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  pumps        Pump[]
+  refills      Refill[]
+}
+
+model Refill {
+  id           String   @id @default(cuid())
+  tankId       String
+  tank         Tank     @relation(fields: [tankId], references: [id])
+  liters       Float
+  costPerLiter Float
+  totalCost    Float
+  supplier     String?
+  invoiceNo    String?
+  date         DateTime @default(now())
+  note         String?
+  createdAt    DateTime @default(now())
+}
+
+model Pump {
+  id        String   @id @default(cuid())
+  name      String
+  tankId    String
+  tank      Tank     @relation(fields: [tankId], references: [id])
+  reading   Float    @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  address   String?
+  balance   Float    @default(0) // credit balance (نسیه)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+  payments  Payment[]
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  amount     Float
+  method     String   @default("cash")
+  note       String?
+  date       DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
+model Sale {
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now())
+  fuelTypeId    String
+  fuelType      FuelType  @relation(fields: [fuelTypeId], references: [id])
+  pumpId        String?
+  pump          Pump?     @relation(fields: [pumpId], references: [id])
+  liters        Float
+  pricePerLiter Float
+  totalAmount   Float
+  paymentType   String    @default("cash") // cash, credit
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  shiftId       String?
+  staffId       String?
+  note          String?
+  createdAt     DateTime  @default(now())
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  category    String   // electricity, salary, maintenance, rent, transport, other
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Staff {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  position  String   // manager, attendant, accountant, guard
+  salary    Float    @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shifts    Shift[]
+}
+
+model Shift {
+  id            String    @id @default(cuid())
+  staffId       String
+  staff         Staff     @relation(fields: [staffId], references: [id])
+  startTime     DateTime  @default(now())
+  endTime       DateTime?
+  openingCash   Float     @default(0)
+  closingCash   Float?
+  status        String    @default("open") // open, closed
+  note          String?
+  createdAt     DateTime  @default(now())
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  namePs    String?
+  nameDa    String?
+  category  String   // oil, lubricant, filter, accessory, other
+  price     Float
+  cost      Float    @default(0)
+  stock     Float    @default(0)
+  unit      String   @default("piece")
+  minStock  Float    @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     ProductSale[]
+}
+
+model ProductSale {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Float
+  price       Float
+  totalAmount Float
+  paymentType String   @default("cash")
+  customerId  String?
+  note        String?
+  createdAt   DateTime @default(now())
+}

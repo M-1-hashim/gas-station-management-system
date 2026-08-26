@@ -1,0 +1,413 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Users,
+  Clock,
+  AlertTriangle,
+  Fuel,
+  ShoppingCart,
+  Plus,
+  Truck,
+  BarChart3,
+  Cylinder,
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatCard } from "../stat-card";
+import { useLanguage } from "../hooks";
+import { formatCurrency, formatLiters, formatTime, isToday } from "@/lib/format";
+import type { DashboardData, ViewKey } from "@/lib/types";
+
+export function DashboardModule({ onNavigate }: { onNavigate?: (v: ViewKey) => void }) {
+  const { t, language } = useLanguage();
+  const { data, isLoading } = useQuery<DashboardData>({
+    queryKey: ["dashboard"],
+    queryFn: async () => {
+      const res = await fetch("/api/gas-station/dashboard");
+      return res.json();
+    },
+  });
+
+  if (isLoading || !data) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Skeleton className="h-80 rounded-xl" />
+          <Skeleton className="h-80 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  const { kpis } = data;
+  const symbol = "؋";
+
+  const fuelTypeName = (ft: { name: string; nameDa: string | null; namePs: string | null }) => {
+    if (language === "da") return ft.nameDa || ft.name;
+    if (language === "ps") return ft.namePs || ft.name;
+    return ft.name;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Banner */}
+      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-accent/10 to-transparent">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold sm:text-2xl">{t("welcome")} 👋</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("manageYourStation")}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => onNavigate?.("sales")} className="gap-2">
+                <Plus className="h-4 w-4" /> {t("newSale")}
+              </Button>
+              <Button variant="outline" onClick={() => onNavigate?.("expenses")} className="gap-2">
+                <Wallet className="h-4 w-4" /> {t("addExpense")}
+              </Button>
+              <Button variant="outline" onClick={() => onNavigate?.("refills")} className="gap-2">
+                <Truck className="h-4 w-4" /> {t("newRefill")}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          title={t("todaysSales")}
+          value={formatCurrency(kpis.todaySales, symbol)}
+          subtitle={t("today")}
+          icon={ShoppingCart}
+          color="emerald"
+          onClick={() => onNavigate?.("sales")}
+        />
+        <StatCard
+          title={t("todaysProfit")}
+          value={formatCurrency(kpis.todayProfit, symbol)}
+          subtitle={t("today")}
+          icon={TrendingUp}
+          color="primary"
+        />
+        <StatCard
+          title={t("todaysExpenses")}
+          value={formatCurrency(kpis.todayExpenses, symbol)}
+          subtitle={t("today")}
+          icon={TrendingDown}
+          color="rose"
+          onClick={() => onNavigate?.("expenses")}
+        />
+        <StatCard
+          title={t("creditBalance")}
+          value={formatCurrency(kpis.totalCredit, symbol)}
+          subtitle={`${kpis.totalCustomers} ${t("customers")}`}
+          icon={Users}
+          color="amber"
+          onClick={() => onNavigate?.("customers")}
+        />
+      </div>
+
+      {/* Secondary KPIs */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard title={t("thisWeek")} value={formatCurrency(kpis.weekSales, symbol)} icon={BarChart3} color="blue" />
+        <StatCard title={t("thisMonth")} value={formatCurrency(kpis.monthSales, symbol)} icon={BarChart3} color="violet" />
+        <StatCard
+          title={t("activeShifts")}
+          value={String(kpis.activeShifts)}
+          icon={Clock}
+          color="emerald"
+          onClick={() => onNavigate?.("shifts")}
+        />
+        <StatCard
+          title={t("lowStockAlerts")}
+          value={String(kpis.lowStockAlerts)}
+          icon={AlertTriangle}
+          color={kpis.lowStockAlerts > 0 ? "rose" : "emerald"}
+          onClick={() => onNavigate?.("tanks")}
+        />
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Sales Overview - 7 days */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              {t("salesOverview")}
+            </CardTitle>
+            <CardDescription className="text-xs">{t("thisWeek")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={data.last7Days} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
+                <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" width={50} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [formatCurrency(value, symbol), t("totalSales")]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="var(--primary)"
+                  strokeWidth={2}
+                  fill="url(#salesGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Sales by Fuel Type */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Fuel className="h-4 w-4 text-primary" />
+              {t("salesByFuelType")}
+            </CardTitle>
+            <CardDescription className="text-xs">{t("today")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.salesByFuelType.length === 0 ? (
+              <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
+                {t("noData")}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4 sm:flex-row">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={data.salesByFuelType}
+                      dataKey="amount"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                    >
+                      {data.salesByFuelType.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value, symbol)} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="w-full space-y-2">
+                  {data.salesByFuelType.map((ft, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: ft.color }} />
+                        <span className="truncate">{fuelTypeName(ft)}</span>
+                      </div>
+                      <div className="text-end">
+                        <p className="font-medium num">{formatLiters(ft.liters)}</p>
+                        <p className="text-xs text-muted-foreground num">{formatCurrency(ft.amount, symbol)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tank Levels */}
+      <Card className="border-border/60">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Cylinder className="h-4 w-4 text-primary" />
+              {t("tankLevels")}
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate?.("tanks")} className="text-xs">
+              {t("viewAll")}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.tanks.map((tank) => {
+              const pct = Math.min(100, (tank.currentLevel / tank.capacity) * 100);
+              const isLow = tank.currentLevel <= tank.minLevel;
+              return (
+                <div
+                  key={tank.id}
+                  className={`rounded-xl border p-4 ${isLow ? "border-rose-300 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30" : "border-border bg-card"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{tank.name}</p>
+                      <p className="text-xs text-muted-foreground">{fuelTypeName(tank.fuelType)}</p>
+                    </div>
+                    {isLow && (
+                      <Badge variant="destructive" className="pulse-warning shrink-0">
+                        <AlertTriangle className="me-1 h-3 w-3" />
+                        {t("lowStockAlerts")}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="num">{formatLiters(tank.currentLevel)}</span>
+                      <span className="num text-muted-foreground">/ {formatLiters(tank.capacity)}</span>
+                    </div>
+                    <Progress
+                      value={pct}
+                      className="h-2"
+                      style={{
+                        background: isLow ? "oklch(0.92 0.04 25)" : undefined,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Activity */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Recent Sales */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShoppingCart className="h-4 w-4 text-primary" />
+                {t("recentSales")}
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => onNavigate?.("sales")} className="text-xs">
+                {t("viewAll")}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {data.recentSales.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">{t("noData")}</p>
+              ) : (
+                data.recentSales.map((sale) => (
+                  <div
+                    key={sale.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                        style={{ backgroundColor: sale.fuelType.color }}
+                      >
+                        {fuelTypeName(sale.fuelType).charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {formatLiters(sale.liters)} {fuelTypeName(sale.fuelType)}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {sale.customer?.name ?? t("walkInCustomer")} • {formatTime(sale.date)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-end shrink-0">
+                      <p className="text-sm font-semibold num">{formatCurrency(sale.totalAmount, symbol)}</p>
+                      <Badge variant={sale.paymentType === "cash" ? "secondary" : "outline"} className="text-xs">
+                        {sale.paymentType === "cash" ? t("cash") : t("credit")}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Expenses */}
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Wallet className="h-4 w-4 text-primary" />
+                {t("recentExpenses")}
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => onNavigate?.("expenses")} className="text-xs">
+                {t("viewAll")}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {data.recentExpenses.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">{t("noData")}</p>
+              ) : (
+                data.recentExpenses.map((expense) => (
+                  <div
+                    key={expense.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                        <Wallet className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {t(expense.category as never) || expense.category}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {expense.description || "—"} • {formatTime(expense.date)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold num shrink-0 text-rose-600 dark:text-rose-400">
+                      -{formatCurrency(expense.amount, symbol)}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
