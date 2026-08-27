@@ -58,3 +58,5 @@ GasStationManager-Setup.zip
 dist-electron/
 GasStationManager-Setup.exe
 GasStationManager-Portable/
+GasStationManager-Desktop-Setup.exe
+dist-electron/
