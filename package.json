@@ -136,6 +136,10 @@
       {
         "from": "prisma",
         "to": "app/prisma"
+      },
+      {
+        "from": ".next/standalone/node.exe",
+        "to": "app/node.exe"
       }
     ],
     "asar": true,

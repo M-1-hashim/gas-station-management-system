@@ -1,99 +1,161 @@
 const { app, BrowserWindow, Menu, shell, dialog } = require("electron");
 const path = require("path");
-const { spawn, exec } = require("child_process");
+const { spawn, execFile } = require("child_process");
 const http = require("http");
+const fs = require("fs");
 
 let mainWindow = null;
 let nextProcess = null;
-const PORT = 3456; // Use non-standard port to avoid conflicts
+const PORT = 3456;
 
 // Check if server is ready
-function waitForServer(maxRetries = 30) {
+function waitForServer(maxRetries = 60) {
   return new Promise((resolve, reject) => {
     let retries = 0;
     const checkServer = () => {
       const req = http.get(`http://127.0.0.1:${PORT}`, (res) => {
-        if (res.statusCode === 200 || res.statusCode === 307) {
-          resolve();
+        resolve();
+      });
+      req.on("error", () => {
+        retries++;
+        if (retries >= maxRetries) {
+          reject(new Error("Server failed to start"));
         } else {
-          retry();
+          setTimeout(checkServer, 1000);
         }
       });
-      req.on("error", () => retry());
       req.setTimeout(2000, () => {
         req.destroy();
-        retry();
+        retries++;
+        if (retries >= maxRetries) {
+          reject(new Error("Server failed to start"));
+        } else {
+          setTimeout(checkServer, 1000);
+        }
       });
-    };
-    const retry = () => {
-      retries++;
-      if (retries >= maxRetries) {
-        reject(new Error("Server failed to start within timeout"));
-      } else {
-        setTimeout(checkServer, 1000);
-      }
     };
     checkServer();
   });
 }
 
-// Start Next.js standalone server
+// Find Node.js executable
+function findNodeExecutable() {
+  const isPackaged = app.isPackaged;
+  
+  if (isPackaged) {
+    // Look for bundled node.exe in resources/app/
+    const resourcesPath = process.resourcesPath;
+    const possiblePaths = [
+      path.join(resourcesPath, "app", "node.exe"),
+      path.join(resourcesPath, "node.exe"),
+    ];
+    
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        console.log("Found bundled Node.js:", p);
+        return p;
+      }
+    }
+    console.log("Bundled Node.js not found, using system node");
+  }
+  
+  // Fallback: use system node
+  return "node";
+}
+
+// Start Next.js server
 function startNextServer() {
   return new Promise((resolve, reject) => {
-    // In production (packaged app), start the bundled server
     const isPackaged = app.isPackaged;
     
-    let serverPath, env, cwd;
+    let serverPath, cwd, env, nodeExe;
     
     if (isPackaged) {
-      // Production: server is in resources/app/server/
+      // Production: server is in resources/app/
       serverPath = path.join(process.resourcesPath, "app", "server.js");
       cwd = path.join(process.resourcesPath, "app");
       const dbPath = path.join(app.getPath("userData"), "gas-station.db");
+      
+      // Copy database if not exists
+      if (!fs.existsSync(dbPath)) {
+        const sourceDb = path.join(process.resourcesPath, "app", "db", "custom.db");
+        if (fs.existsSync(sourceDb)) {
+          try {
+            fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+            fs.copyFileSync(sourceDb, dbPath);
+            console.log("Database copied to:", dbPath);
+          } catch (e) {
+            console.error("Failed to copy database:", e);
+          }
+        }
+      }
+      
       env = {
         ...process.env,
         NODE_ENV: "production",
         PORT: String(PORT),
         DATABASE_URL: `file:${dbPath}`,
         NEXTAUTH_URL: `http://127.0.0.1:${PORT}`,
+        HOSTNAME: "127.0.0.1",
       };
+      
+      nodeExe = findNodeExecutable();
     } else {
-      // Development: server is in .next/standalone/
+      // Development
       serverPath = path.join(__dirname, "..", ".next", "standalone", "server.js");
       cwd = path.join(__dirname, "..", ".next", "standalone");
       env = {
         ...process.env,
         NODE_ENV: "production",
         PORT: String(PORT),
+        HOSTNAME: "127.0.0.1",
       };
+      nodeExe = "node";
     }
 
-    console.log(`Starting server: ${serverPath}`);
+    console.log(`Node executable: ${nodeExe}`);
+    console.log(`Server path: ${serverPath}`);
     console.log(`Working dir: ${cwd}`);
+    console.log(`Database: ${env.DATABASE_URL || "default"}`);
 
-    // Use the electron's node to run the server
-    nextProcess = spawn(process.execPath, [serverPath], {
+    // Kill any existing process on the port
+    try {
+      if (process.platform === "win32") {
+        execFile("taskkill", ["/F", "/FI", `PID eq ${nextProcess?.pid}`], () => {});
+      }
+    } catch (e) {}
+
+    nextProcess = spawn(nodeExe, [serverPath], {
       env,
       cwd,
       stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
     });
 
+    let output = "";
+
     nextProcess.stdout.on("data", (data) => {
-      const output = data.toString();
-      console.log(`[Server] ${output.trim()}`);
+      const text = data.toString();
+      output += text;
+      console.log(`[Server] ${text.trim()}`);
     });
 
     nextProcess.stderr.on("data", (data) => {
-      console.error(`[Server Error] ${data.toString().trim()}`);
+      const text = data.toString();
+      output += text;
+      console.error(`[Server Error] ${text.trim()}`);
     });
 
     nextProcess.on("error", (err) => {
       console.error("Failed to start server:", err);
-      reject(err);
+      reject(new Error(`${err.message}\n\nServer output:\n${output}`));
     });
 
     nextProcess.on("exit", (code) => {
       console.log(`Server exited with code ${code}`);
+      if (code !== 0 && code !== null) {
+        reject(new Error(`Server exited with code ${code}\n\nOutput:\n${output}`));
+      }
     });
 
     // Wait for server to be ready
@@ -102,39 +164,10 @@ function startNextServer() {
         console.log("Server is ready!");
         resolve();
       })
-      .catch(reject);
+      .catch((err) => {
+        reject(new Error(`${err.message}\n\nServer output:\n${output}`));
+      });
   });
-}
-
-// Copy database to user data folder on first run
-function setupDatabase() {
-  const userDataPath = app.getPath("userData");
-  const dbPath = path.join(userDataPath, "gas-station.db");
-  
-  if (!require("fs").existsSync(dbPath)) {
-    // Try to copy from resources
-    const isPackaged = app.isPackaged;
-    let sourceDbPath;
-    
-    if (isPackaged) {
-      sourceDbPath = path.join(process.resourcesPath, "app", "db", "custom.db");
-    } else {
-      sourceDbPath = path.join(__dirname, "..", "db", "custom.db");
-    }
-    
-    if (require("fs").existsSync(sourceDbPath)) {
-      try {
-        // Create directory if needed
-        require("fs").mkdirSync(userDataPath, { recursive: true });
-        require("fs").copyFileSync(sourceDbPath, dbPath);
-        console.log("Database copied to:", dbPath);
-      } catch (e) {
-        console.error("Failed to copy database:", e);
-      }
-    }
-  }
-  
-  return dbPath;
 }
 
 // Create main window
@@ -154,31 +187,30 @@ function createWindow() {
     show: false,
     backgroundColor: "#f8faf9",
     autoHideMenuBar: true,
-    frame: true,
-    titleBarStyle: "default",
   });
 
-  // Load the app - NO BROWSER NEEDED, Electron IS the browser
   const url = `http://127.0.0.1:${PORT}`;
   console.log(`Loading URL: ${url}`);
   
   mainWindow.loadURL(url);
 
-  // Show window when ready (prevents white flash)
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
     mainWindow.focus();
+    // Maximize window
+    mainWindow.maximize();
   });
 
-  // Handle loading errors
   mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
     console.error("Failed to load:", errorCode, errorDescription);
+    // Retry after delay
     setTimeout(() => {
-      mainWindow.loadURL(url);
-    }, 2000);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadURL(url);
+      }
+    }, 3000);
   });
 
-  // Handle external links - open in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url: targetUrl }) => {
     if (targetUrl.startsWith("http://127.0.0.1") || targetUrl.startsWith("http://localhost")) {
       return { action: "allow" };
@@ -187,28 +219,19 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  // Handle window closed
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 
-  // Remove menu bar completely
   Menu.setApplicationMenu(null);
 }
 
 // App event handlers
 app.whenReady().then(async () => {
   try {
-    // Setup database
-    setupDatabase();
-    
-    // Start the internal server
     await startNextServer();
-    
-    // Create the window
     createWindow();
 
-    // On macOS, re-create window when dock icon is clicked
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
@@ -217,50 +240,47 @@ app.whenReady().then(async () => {
   } catch (error) {
     console.error("Failed to start application:", error);
     dialog.showErrorBox(
-      "خطا در شروع برنامه / Startup Error",
-      `Failed to start the application:\n\n${error.message}\n\nPlease ensure Node.js is installed and try again.`
+      "Startup Error / خطا در شروع برنامه",
+      `Failed to start the application:\n\n${error.message}\n\nPlease contact support.`
     );
     app.quit();
   }
 });
 
-// Quit when all windows are closed (except on macOS)
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
+    // Kill server before quitting
+    if (nextProcess) {
+      try {
+        if (process.platform === "win32") {
+          spawn("taskkill", ["/pid", nextProcess.pid, "/f", "/t"]);
+        } else {
+          nextProcess.kill("SIGTERM");
+        }
+      } catch (e) {}
+    }
     app.quit();
   }
 });
 
-// Clean up server on quit
 app.on("before-quit", () => {
   if (nextProcess) {
     try {
-      // Kill the process tree
       if (process.platform === "win32") {
-        exec(`taskkill /pid ${nextProcess.pid} /f /t`);
+        spawn("taskkill", ["/pid", nextProcess.pid, "/f", "/t"]);
       } else {
-        nextProcess.kill("SIGTERM");
+        nextProcess.kill("SIGKILL");
       }
-    } catch (e) {
-      console.error("Error killing server:", e);
-    }
+    } catch (e) {}
     nextProcess = null;
   }
 });
 
-// Handle process exit
 process.on("exit", () => {
   if (nextProcess) {
-    try {
-      nextProcess.kill("SIGKILL");
-    } catch (e) {}
+    try { nextProcess.kill("SIGKILL"); } catch (e) {}
   }
 });
 
-process.on("SIGINT", () => {
-  app.quit();
-});
-
-process.on("SIGTERM", () => {
-  app.quit();
-});
+process.on("SIGINT", () => app.quit());
+process.on("SIGTERM", () => app.quit());
