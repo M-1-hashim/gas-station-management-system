@@ -113,17 +113,13 @@
       "buildResources": "electron"
     },
     "files": [
-      "electron/**/*",
-      ".next/standalone/**/*",
-      ".next/static/**/*",
-      "public/**/*",
-      "prisma/**/*",
-      "package.json"
+      "electron/main.js",
+      "electron/assets/**/*"
     ],
     "extraResources": [
       {
         "from": ".next/standalone",
-        "to": "app/.next/standalone"
+        "to": "app"
       },
       {
         "from": ".next/static",
@@ -134,38 +130,39 @@
         "to": "app/public"
       },
       {
+        "from": "db",
+        "to": "app/db"
+      },
+      {
         "from": "prisma",
         "to": "app/prisma"
       }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node",
+      "**/prisma/**"
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "electron/assets/icon.png"
     },
     "nsis": {
       "oneClick": false,
-      "perMachine": false,
+      "perMachine": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Gas Station Manager",
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": true
-    },
-    "mac": {
-      "target": ["dmg"],
-      "icon": "electron/assets/icon.png",
-      "category": "public.app-category.business"
-    },
-    "linux": {
-      "target": ["AppImage", "deb"],
-      "icon": "electron/assets/icon.png",
-      "category": "Office"
     }
   }
 }
