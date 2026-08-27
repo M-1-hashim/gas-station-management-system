@@ -56,3 +56,5 @@ electron/assets/icon-*.png
 GasStationManager-Portable/
 GasStationManager-Setup.zip
 dist-electron/
+GasStationManager-Setup.exe
+GasStationManager-Portable/
