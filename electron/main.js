@@ -97,9 +97,6 @@ function startNextServer() {
         DATABASE_URL: `file:${dbPath}`,
         NEXTAUTH_URL: `http://127.0.0.1:${PORT}`,
         HOSTNAME: "127.0.0.1",
-        // Use Prisma WASM engine (cross-platform, no native binary needed)
-        PRISMA_CLIENT_ENGINE_TYPE: "library",
-        PRISMA_ENGINES_MIRROR: "",
       };
       
       nodeExe = findNodeExecutable();
