@@ -376,6 +376,28 @@ export function SettingsModule() {
               <p className="text-xs text-muted-foreground">3 {t("language")}</p>
             </div>
           </div>
+
+          {/* Check for Updates */}
+          <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Download className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Check for Updates / بررسی آپدیت</p>
+                <p className="text-xs text-muted-foreground">Download update (88 MB) instead of full setup (473 MB)</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                window.open("https://github.com/M-1-hashim/gas-station-management-system/releases/latest", "_blank");
+              }}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" /> Check Updates
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
